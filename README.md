@@ -1,5 +1,5 @@
 # Proofpoint Secure Email Relay Admin API
-
+[![PyPI Downloads](https://static.pepy.tech/badge/ser-admin-api)](https://pepy.tech/projects/ser-admin-api)  
 Library implements the Proofpoint Secure Email Relay administrative APIs via Python.
 
 ### Requirements:
