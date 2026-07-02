@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 version_scheme = "post-release"
 local_scheme = "node-and-date"
-fallback_version = "0.0.1"
+fallback_version = "0.1.0"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -19,6 +19,29 @@ dynamic = ["version"]
 description = "A typed Python client for the Proofpoint Secure Email Relay administrative APIs built with Klarient."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "Ludvik Jerabek", email = "83429267+ludvikjerabek@users.noreply.github.com" }
+]
+keywords = [
+    "api",
+    "klarient",
+    "proofpoint",
+    "rest",
+    "secure-email-relay",
+    "ser",
+    "typed",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
 dependencies = [
     "klarient[requests]>=0.3.0",
     "requests-oauth2client>=1.8",
