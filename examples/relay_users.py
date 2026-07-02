@@ -1,0 +1,110 @@
+from __future__ import annotations
+
+from common import create_client, load_settings, show_page, show_resource
+from ser_admin_api import SERClient
+from ser_admin_api.relay_users import (
+    RelayUserAllowedAddress,
+    RelayUserCreate,
+    RelayUserCredentialsUpdate,
+    RelayUserLimits,
+    RelayUserNamesQuery,
+    RelayUserRewriteRule,
+    RelayUsersQuery,
+    RelayUserSearch,
+    RelayUserStatus,
+    RelayUserStatusUpdate,
+    RelayUserType,
+    RelayUserUpdate,
+)
+
+
+def show_relay_user_collections(client: SERClient) -> None:
+    """Show relay-user collection, search, and names resources."""
+    show_resource("Relay users resource", client.relay.relay_users)
+    show_resource("Relay user names resource", client.relay.relay_users.names)
+    show_resource("Relay user search resource", client.relay.relay_users.search)
+
+    names = client.relay.relay_users.names.retrieve(
+        RelayUserNamesQuery().with_relay_user_type(RelayUserType.STANDARD)
+    )
+    print(f"names_status={names.status}")
+    for relay_user in names.data[:5]:
+        print(f"name={relay_user.name}")
+
+    first_page = client.relay.relay_users.retrieve(RelayUsersQuery(page=1, size=5))
+    show_page(first_page)
+    for relay_user in first_page:
+        print(f"user={relay_user.relay_user_id} name={relay_user.name} status={relay_user.status}")
+
+    search = client.relay.relay_users.search.retrieve(RelayUserSearch().with_size(5))
+    show_page(search)
+
+
+def show_relay_user_request_shapes() -> None:
+    """Show typed request objects used for relay-user mutations."""
+    create_request = (
+        RelayUserCreate(
+            username="example",
+            display_name="Example Relay User",
+            domain="example.com",
+        )
+        .with_tag("tag-id")
+    )
+    update_request = (
+        RelayUserUpdate(
+            allowed_address=[
+                RelayUserAllowedAddress(mail_from="example.com", header_from="example.com")
+            ],
+            allowed_ips=["1.1.1.1"],
+            cluster_id="cluster-23",
+            contact_email=["admin@example.com"],
+            internal_only=False,
+            limits=RelayUserLimits(messages_per_24_hours=1000),
+            max_msg_size=150000000,
+            name="Updated Relay User",
+            preferred_username="relayuser1",
+            unsubscribe_list_id="unsubscribe-list-id",
+        )
+        .with_rewrite_rule(
+            RelayUserRewriteRule(
+                rewrite_from="old-company.com",
+                rewrite_to="new-company.com",
+                header_from_enabled=True,
+                envelope_from_enabled=False,
+                reply_to_enabled=True,
+            )
+        )
+        .with_tag("tag-id")
+    )
+    status_request = RelayUserStatusUpdate().with_relay_user("relay-user-id", RelayUserStatus.DISABLED)
+    credential_request = (
+        RelayUserCredentialsUpdate()
+        .expires_on("2026-12-09")
+        .with_custom_credential("custom-secret")
+        .with_grace_period(2)
+    )
+
+    print(f"create_request={create_request.to_mapping()}")
+    print(f"update_request={update_request.to_mapping()}")
+    print(f"status_request={status_request.to_list()}")
+    print(f"credential_request={credential_request.to_mapping()}")
+
+    # created = client.relay.relay_users.create(create_request)
+    # updated = client.relay.relay_users[created.data.relay_user_id].update(update_request)
+    # status = client.relay.relay_users.update_status(status_request)
+    # credentials = client.relay.relay_users["relay-user-id"].credentials.renew(credential_request)
+    # note = client.relay.relay_users["relay-user-id"].notes.create("Example relay user note")
+
+
+def main() -> None:
+    settings = load_settings()
+    client = create_client(settings)
+    try:
+        show_relay_user_collections(client)
+        show_relay_user_request_shapes()
+    finally:
+        client.close()
+
+
+if __name__ == "__main__":
+    main()
