@@ -1,4 +1,4 @@
-# Proofpoint Secure Email Relay API Package
+# Proofpoint Secure Email Relay Admin API
 
 Library implements the Proofpoint Secure Email Relay administrative APIs via Python.
 
