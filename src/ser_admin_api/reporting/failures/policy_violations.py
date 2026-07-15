@@ -139,11 +139,8 @@ class FailurePolicyViolationsPage(Page[FailurePolicyViolation]):
     @property
     def policy_types(self) -> list[str]:
         """Policy types returned in response metadata."""
-        response = self._response
-        if response is None:
-            return []
-        data = response.json()
-        metadata = data.get("metadata", {}) if isinstance(data, Mapping) else {}
+        payload = self.payload
+        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
         if not isinstance(metadata, Mapping):
             return []
         return _string_list(metadata.get("policyTypes"))
@@ -156,17 +153,14 @@ class PolicyViolationsResource(PageableResource[_SyncClientImpl, FailurePolicyVi
             owner,
             segment=segment,
             page_item_model=FailurePolicyViolation,
+            page_model=FailurePolicyViolationsPage,
             pagination=SERTotalCountPagination(),
             **kwargs,
         )
 
     def retrieve(self, options: FailurePolicyViolationsQuery | None = None) -> FailurePolicyViolationsPage:
         """Retrieve policy violation report data."""
-        page = self._retrieve_page(options=options)
-        response = page._response
-        if response is None:
-            raise RuntimeError("page response metadata is unavailable")
-        return FailurePolicyViolationsPage(page, info=page.info, response=response)
+        return self._retrieve_page_as(FailurePolicyViolationsPage, options=options)
 
 class TagPolicyViolationsResource(PageableResource[_SyncClientImpl, FailurePolicyViolation, PageNumberState]):
     """Tag policy violations endpoint."""
@@ -176,14 +170,11 @@ class TagPolicyViolationsResource(PageableResource[_SyncClientImpl, FailurePolic
             owner,
             segment=segment,
             page_item_model=FailurePolicyViolation,
+            page_model=FailurePolicyViolationsPage,
             pagination=SERPagination(),
             **kwargs,
         )
 
     def retrieve(self, options: FailurePolicyViolationsQuery | None = None) -> FailurePolicyViolationsPage:
         """Retrieve tag policy violation report data."""
-        page = self._retrieve_page(options=options)
-        response = page._response
-        if response is None:
-            raise RuntimeError("page response metadata is unavailable")
-        return FailurePolicyViolationsPage(page, info=page.info, response=response)
+        return self._retrieve_page_as(FailurePolicyViolationsPage, options=options)
