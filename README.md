@@ -69,7 +69,9 @@ examples/
   tag_management.py
 ```
 
-Copy `examples/settings.example.json` to `examples/settings.json` and add your principal and secret to run them locally.
+Copy `examples/settings.example.json` to `settings.json` at the project root and add your principal and secret to run
+them locally. The examples also accept `examples/settings.json` if you prefer to keep local example settings beside the
+example files.
 
 The examples are intentionally resource-focused so each file demonstrates one small part of the SER API tree. They are
 read-only by default. Mutation examples are shown as request shapes or commented calls because connector and relay-user
@@ -269,15 +271,28 @@ methods add optional fields while keeping the final JSON body aligned with the S
 from ser_admin_api.relay_users import RelayUserCreate
 
 create_request = (
-    RelayUserCreate(
-        username="example",
-        display_name="Example Relay User",
-        domain="example.com",
-    )
+    RelayUserCreate("cluster-23", "Example Relay User")
+    .with_allowed_address(mail_from="example.com", header_from="example.com")
+    .generate(length=16, allow_lowercase=True, allow_uppercase=True)
     .with_tag("tag-id")
 )
 
 print(create_request.to_mapping())
+```
+
+```python
+from ser_admin_api.relay_users import RelayUserUpdate
+
+relay_user = client.relay.relay_users["relay-user-id"].retrieve().data
+
+update_request = RelayUserUpdate(
+    allowed_address=relay_user.allowed_addresses_for_update(),
+).with_allowed_address(
+    mail_from="new.example.com",
+    header_from="new.example.com",
+)
+
+print(update_request.to_mapping())
 ```
 
 ```python
@@ -291,8 +306,8 @@ create_request = (
 print(create_request.to_mapping())
 ```
 
-Connector and relay-user create/update/status calls modify tenant configuration. The examples show the request shapes,
-and `tools/live_audit.py` contains opt-in live validation flows for disposable records.
+Connector and relay-user create/update/status calls modify tenant configuration. The examples show the request shapes
+without changing existing tenant data.
 
 ### Typed Response Objects
 

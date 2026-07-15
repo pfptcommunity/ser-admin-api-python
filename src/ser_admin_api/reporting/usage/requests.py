@@ -116,7 +116,7 @@ class UsageTrafficSummaryQuery(QueryRequest):
             end_date: Date | DateTime | str | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(start_date=start_date, end_date=end_date)
+        self._set_optional_fields(start_date=start_date, end_date=end_date)
 
     start_date = RequestField[Date | DateTime | str](
         name="dates[gte]",
@@ -156,7 +156,7 @@ class _UsageDatesQuery(QueryRequest):
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
         range_start, range_end = _range_fields(date, start_date, end_date)
-        self._set_defined_fields(date=date, start_date=range_start, end_date=range_end)
+        self._set_optional_fields(date=date, start_date=range_start, end_date=range_end)
 
     date = RequestField[Date | DateTime | str](name="dates", value_type=(Date, DateTime, str))
     start_date = RequestField[Date | DateTime | str](
@@ -202,7 +202,7 @@ class _UsagePageQuery(_UsageDatesQuery, Generic[ScopedUsageSortFieldT]):
             start_date=start_date,
             end_date=end_date,
         )
-        self._set_defined_fields(
+        self._set_optional_fields(
             order_by=order_by,
             order_dir=order_dir,
             page=page,
@@ -273,7 +273,7 @@ class UsageMetricsRequest(JSONBodyRequest):
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
         range_start, range_end = _range_fields(date, start_date, end_date)
-        self._set_defined_fields(
+        self._set_optional_fields(
             date=date,
             start_date=range_start,
             end_date=range_end,
@@ -592,7 +592,7 @@ class UsageTrendRequest(JSONBodyRequest):
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
         range_start, range_end = _range_fields(date, start_date, end_date)
-        self._set_defined_fields(
+        self._set_optional_fields(
             date=date,
             start_date=range_start,
             end_date=range_end,

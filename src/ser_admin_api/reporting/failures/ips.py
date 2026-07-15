@@ -77,7 +77,7 @@ class FailureIPsQuery(QueryRequest):
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
         range_start, range_end = _range_fields(date, start_date, end_date)
-        self._set_defined_fields(
+        self._set_optional_fields(
             date=date,
             start_date=range_start,
             end_date=range_end,

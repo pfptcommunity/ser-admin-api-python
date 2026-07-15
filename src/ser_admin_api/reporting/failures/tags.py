@@ -152,7 +152,7 @@ class FailureTagsRequest(JSONBodyRequest):
             quarantined_messages_gte,
             quarantined_messages_lte,
         )
-        self._set_defined_fields(
+        self._set_optional_fields(
             date=date,
             start_date=range_start,
             end_date=range_end,

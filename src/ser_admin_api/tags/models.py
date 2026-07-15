@@ -85,18 +85,28 @@ class TagName(dict[str, Any]):
         return str(self.get("name", ""))
 
 
-class TagDetail(dict[str, Any]):
-    """Detailed tag record."""
+class TagDetail(Tag):
+    """Detailed tag record returned by the tag download endpoint."""
 
     @property
-    def tag_id(self) -> str:
-        """Tag identifier."""
-        return _string_value(self, "tagId")
+    def created_by_name(self) -> str:
+        """Full name of the user who created the tag."""
+        return _string_value(self, "createdByName")
 
     @property
-    def name(self) -> str:
-        """Tag display name."""
-        return str(self.get("name", ""))
+    def created_by_email(self) -> str:
+        """Email address of the user who created the tag."""
+        return _string_value(self, "createdByEmail")
+
+    @property
+    def updated_by_name(self) -> str:
+        """Full name of the user who last updated the tag."""
+        return _string_value(self, "updatedByName")
+
+    @property
+    def updated_by_email(self) -> str:
+        """Email address of the user who last updated the tag."""
+        return _string_value(self, "updatedByEmail")
 
 
 class TagNote(dict[str, Any]):

@@ -36,6 +36,12 @@ def show_relay_user_collections(client: SERClient) -> None:
     for relay_user in first_page:
         print(f"user={relay_user.relay_user_id} name={relay_user.name} status={relay_user.status}")
 
+    if first_page:
+        relay_user = client.relay.relay_users[first_page[0].relay_user_id].retrieve().data
+        print(f"detail={relay_user.relay_user_id} cluster={relay_user.cluster_id}")
+        for address in relay_user.allowed_addresses[:5]:
+            print(f"allowed_address={address.mail_from} header_from={address.header_from}")
+
     search = client.relay.relay_users.search.retrieve(RelayUserSearch().with_size(5))
     show_page(search)
 
@@ -43,11 +49,9 @@ def show_relay_user_collections(client: SERClient) -> None:
 def show_relay_user_request_shapes() -> None:
     """Show typed request objects used for relay-user mutations."""
     create_request = (
-        RelayUserCreate(
-            username="example",
-            display_name="Example Relay User",
-            domain="example.com",
-        )
+        RelayUserCreate("cluster-23", "Example Relay User")
+        .with_allowed_address(mail_from="example.com", header_from="example.com")
+        .generate(length=16, allow_lowercase=True, allow_uppercase=True)
         .with_tag("tag-id")
     )
     update_request = (
@@ -78,8 +82,7 @@ def show_relay_user_request_shapes() -> None:
     )
     status_request = RelayUserStatusUpdate().with_relay_user("relay-user-id", RelayUserStatus.DISABLED)
     credential_request = (
-        RelayUserCredentialsUpdate()
-        .expires_on("2026-12-09")
+        RelayUserCredentialsUpdate(credential_expiration_date="2026-12-09")
         .with_custom_credential("custom-secret")
         .with_grace_period(2)
     )
@@ -88,6 +91,14 @@ def show_relay_user_request_shapes() -> None:
     print(f"update_request={update_request.to_mapping()}")
     print(f"status_request={status_request.to_list()}")
     print(f"credential_request={credential_request.to_mapping()}")
+
+    # A detail response can be converted back into update request objects for
+    # read-modify-update workflows:
+    #
+    # relay_user = client.relay.relay_users["relay-user-id"].retrieve().data
+    # update = RelayUserUpdate(
+    #     allowed_address=relay_user.allowed_addresses_for_update(),
+    # ).with_allowed_address("new.example.com", "new.example.com")
 
     # created = client.relay.relay_users.create(create_request)
     # updated = client.relay.relay_users[created.data.relay_user_id].update(update_request)

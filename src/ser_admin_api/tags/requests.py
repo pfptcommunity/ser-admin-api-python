@@ -30,7 +30,7 @@ class _TagFilterQuery(QueryRequest):
             direction: SortDirection | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(name=name, sort=sort, direction=direction)
+        self._set_optional_fields(name=name, sort=sort, direction=direction)
 
     assigned_count = RequestField[int](value_type=int)
     assigned_count_gte = RequestField[int](name="assigned_count[gte]", value_type=int)
@@ -136,7 +136,7 @@ class TagInfoQuery(_TagFilterQuery):
             direction: SortDirection | None = None,
     ) -> None:
         super().__init__(name=name, sort=sort, direction=direction)
-        self._set_defined_fields(page=page, size=size)
+        self._set_optional_fields(page=page, size=size)
 
     page = RequestField[int](name="page_num", value_type=int)
     size = RequestField[int](name="page_size", value_type=int)
@@ -183,7 +183,7 @@ class TagNotesQuery(QueryRequest):
             direction: SortDirection | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             page=page,
             size=size,
             sort=sort,
@@ -238,7 +238,7 @@ class _TagCreate(JSONBodyRequest):
     ) -> None:
         super().__init__()
         self.name = name
-        self._set_defined_fields(description=description, contacts=contacts)
+        self._set_optional_fields(description=description, contacts=contacts)
 
     name = RequestField[str](value_type=str)
     description = RequestField[str](value_type=str)
@@ -256,13 +256,13 @@ class _TagUpdate(JSONBodyRequest):
     def __init__(
             self,
             *,
-            name: str | None = None,
+            name: str,
             description: str | None = None,
             contacts: list[str] | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
-            name=name,
+        self.name = name
+        self._set_optional_fields(
             description=description,
             contacts=contacts,
         )
@@ -282,6 +282,6 @@ class _TagNoteCreate(JSONBodyRequest):
 
     def __init__(self, *, note: str | None = None) -> None:
         super().__init__()
-        self._set_defined_fields(note=note)
+        self._set_optional_fields(note=note)
 
     note = RequestField[str](value_type=str)
