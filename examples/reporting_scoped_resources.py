@@ -6,14 +6,16 @@ from common import create_client, load_settings, show_resource
 from ser_admin_api import SERClient
 from ser_admin_api.reporting import DateRangeQuery, ReportRequest
 from ser_admin_api.reporting.failures import (
-    FailureDeliveryFailureDomainRequest,
-    FailureDeliveryFailureRecipientRequest,
     FailureIPsQuery,
     FailureMessageFilteringRequest,
     FailurePolicyViolationsQuery,
     FailureSendingAddressesQuery,
-    FailureTagDeliveryFailureRecipientRequest,
     FailureTagRelayUsersQuery,
+)
+from ser_admin_api.reporting.failures.delivery_failures import (
+    DomainRequest,
+    RecipientRequest,
+    TagRecipientRequest,
 )
 
 
@@ -49,10 +51,10 @@ def show_scoped_report_shapes(client: SERClient, start: date, end: date) -> None
     print(FailureIPsQuery().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
     print(FailurePolicyViolationsQuery().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
     print(FailureMessageFilteringRequest().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
-    print(FailureDeliveryFailureRecipientRequest().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
-    print(FailureDeliveryFailureDomainRequest().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
+    print(RecipientRequest().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
+    print(DomainRequest().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
     print(FailureTagRelayUsersQuery().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
-    print(FailureTagDeliveryFailureRecipientRequest().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
+    print(TagRecipientRequest().with_dates(gte=start, lte=end).with_page(1, 5).to_mapping())
 
 
 def main() -> None:

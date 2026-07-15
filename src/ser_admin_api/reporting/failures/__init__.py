@@ -1,20 +1,6 @@
 from ser_admin_api.reporting.failures.common import ReportInterval
 from ser_admin_api.reporting.failures.delivery_failures import (
-    DeliveryFailuresDomainResource,
-    DeliveryFailuresRecipientResource,
     DeliveryFailuresResource,
-    FailureDeliveryFailureDomain,
-    FailureDeliveryFailureDomainMetadata,
-    FailureDeliveryFailureDomainPage,
-    FailureDeliveryFailureDomainRequest,
-    FailureDeliveryFailureDomainSortField,
-    FailureDeliveryFailureRecipient,
-    FailureDeliveryFailureRecipientMetadata,
-    FailureDeliveryFailureRecipientPage,
-    FailureDeliveryFailureRecipientRequest,
-    FailureDeliveryFailureRecipientSortField,
-    FailureTagDeliveryFailureRecipientRequest,
-    TagDeliveryFailuresRecipientResource,
     TagDeliveryFailuresResource,
 )
 from ser_admin_api.reporting.failures.ips import FailureIP, FailureIPsQuery, FailureIPSortField, IpsResource
@@ -61,20 +47,8 @@ from ser_admin_api.reporting.failures.sending_addresses import (
 from ser_admin_api.reporting.failures.tags import FailureTag, FailureTagResource, FailureTagsRequest, FailureTagsResource, FailureTagSortField
 
 __all__ = [
-    "DeliveryFailuresDomainResource",
-    "DeliveryFailuresRecipientResource",
     "DeliveryFailuresResource",
     "FailuresResource",
-    "FailureDeliveryFailureDomain",
-    "FailureDeliveryFailureDomainMetadata",
-    "FailureDeliveryFailureDomainPage",
-    "FailureDeliveryFailureDomainRequest",
-    "FailureDeliveryFailureDomainSortField",
-    "FailureDeliveryFailureRecipient",
-    "FailureDeliveryFailureRecipientMetadata",
-    "FailureDeliveryFailureRecipientPage",
-    "FailureDeliveryFailureRecipientRequest",
-    "FailureDeliveryFailureRecipientSortField",
     "FailureIP",
     "FailureIPsQuery",
     "FailureIPSortField",
@@ -100,7 +74,6 @@ __all__ = [
     "FailureSendingAddressesQuery",
     "FailureSendingAddressSortField",
     "FailureTag",
-    "FailureTagDeliveryFailureRecipientRequest",
     "FailureTagRelayUsersQuery",
     "FailureTagRelayUsersResource",
     "FailureTagRelayUserSortField",
@@ -114,7 +87,6 @@ __all__ = [
     "PolicyViolationsResource",
     "ReportInterval",
     "SendingAddressesResource",
-    "TagDeliveryFailuresRecipientResource",
     "TagDeliveryFailuresResource",
     "TagPolicyViolationsResource",
 ]
