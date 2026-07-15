@@ -178,11 +178,8 @@ class FailureMessageFilteringPage(Page[FailureMessageFiltering]):
         return _string_list(metadata.get("finalRules"))
 
     def _metadata(self) -> Mapping[str, object]:
-        response = self._response
-        if response is None:
-            return {}
-        data = response.json()
-        metadata = data.get("metadata", {}) if isinstance(data, Mapping) else {}
+        payload = self.payload
+        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
         return metadata if isinstance(metadata, Mapping) else {}
 
 class MessageFilteringResource(PageableResource[_SyncClientImpl, FailureMessageFiltering, PageNumberState]):
@@ -193,14 +190,11 @@ class MessageFilteringResource(PageableResource[_SyncClientImpl, FailureMessageF
             owner,
             segment=segment,
             page_item_model=FailureMessageFiltering,
+            page_model=FailureMessageFilteringPage,
             pagination=SERPagination(),
             **kwargs,
         )
 
     def retrieve(self, options: FailureMessageFilteringRequest | None = None) -> FailureMessageFilteringPage:
         """Retrieve message filtering failure report data."""
-        page = self._retrieve_page(HTTPMethod.POST, options)
-        response = page._response
-        if response is None:
-            raise RuntimeError("page response metadata is unavailable")
-        return FailureMessageFilteringPage(page, info=page.info, response=response)
+        return self._retrieve_page_as(FailureMessageFilteringPage, HTTPMethod.POST, options)

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 version_scheme = "post-release"
 local_scheme = "node-and-date"
-fallback_version = "0.1.0"
+fallback_version = "0.1.1"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -43,7 +43,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "klarient[requests]>=0.3.0",
+    "klarient[requests]>=0.4.0",
     "requests-oauth2client>=1.8",
 ]
 

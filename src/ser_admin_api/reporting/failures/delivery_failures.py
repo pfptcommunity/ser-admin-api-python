@@ -395,11 +395,8 @@ class FailureDeliveryFailureRecipientPage(Page[FailureDeliveryFailureRecipient])
         return _string_list(metadata.get("recipients"))
 
     def _metadata(self) -> Mapping[str, object]:
-        response = self._response
-        if response is None:
-            return {}
-        data = response.json()
-        metadata = data.get("metadata", {}) if isinstance(data, Mapping) else {}
+        payload = self.payload
+        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
         return metadata if isinstance(metadata, Mapping) else {}
 
 class FailureDeliveryFailureDomainPage(Page[FailureDeliveryFailureDomain]):
@@ -418,11 +415,8 @@ class FailureDeliveryFailureDomainPage(Page[FailureDeliveryFailureDomain]):
         return _string_list(metadata.get("domains"))
 
     def _metadata(self) -> Mapping[str, object]:
-        response = self._response
-        if response is None:
-            return {}
-        data = response.json()
-        metadata = data.get("metadata", {}) if isinstance(data, Mapping) else {}
+        payload = self.payload
+        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
         return metadata if isinstance(metadata, Mapping) else {}
 
 class DeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, FailureDeliveryFailureRecipient, PageNumberState]):
@@ -433,6 +427,7 @@ class DeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, Failur
             owner,
             segment=segment,
             page_item_model=FailureDeliveryFailureRecipient,
+            page_model=FailureDeliveryFailureRecipientPage,
             pagination=SERPagination(),
             **kwargs,
         )
@@ -442,11 +437,7 @@ class DeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, Failur
             options: FailureDeliveryFailureRecipientRequest | None = None,
     ) -> FailureDeliveryFailureRecipientPage:
         """Retrieve delivery failures grouped by recipient."""
-        page = self._retrieve_page(HTTPMethod.POST, options)
-        response = page._response
-        if response is None:
-            raise RuntimeError("page response metadata is unavailable")
-        return FailureDeliveryFailureRecipientPage(page, info=page.info, response=response)
+        return self._retrieve_page_as(FailureDeliveryFailureRecipientPage, HTTPMethod.POST, options)
 
 class TagDeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, FailureDeliveryFailureRecipient, PageNumberState]):
     """Tag delivery failures by recipient endpoint."""
@@ -456,6 +447,7 @@ class TagDeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, Fai
             owner,
             segment=segment,
             page_item_model=FailureDeliveryFailureRecipient,
+            page_model=FailureDeliveryFailureRecipientPage,
             pagination=SERPagination(),
             **kwargs,
         )
@@ -465,11 +457,7 @@ class TagDeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, Fai
             options: FailureTagDeliveryFailureRecipientRequest | None = None,
     ) -> FailureDeliveryFailureRecipientPage:
         """Retrieve tag delivery failures grouped by recipient."""
-        page = self._retrieve_page(HTTPMethod.POST, options)
-        response = page._response
-        if response is None:
-            raise RuntimeError("page response metadata is unavailable")
-        return FailureDeliveryFailureRecipientPage(page, info=page.info, response=response)
+        return self._retrieve_page_as(FailureDeliveryFailureRecipientPage, HTTPMethod.POST, options)
 
 class DeliveryFailuresDomainResource(PageableResource[_SyncClientImpl, FailureDeliveryFailureDomain, PageNumberState]):
     """Delivery failures by domain endpoint."""
@@ -479,6 +467,7 @@ class DeliveryFailuresDomainResource(PageableResource[_SyncClientImpl, FailureDe
             owner,
             segment=segment,
             page_item_model=FailureDeliveryFailureDomain,
+            page_model=FailureDeliveryFailureDomainPage,
             pagination=SERTotalCountPagination(),
             **kwargs,
         )
@@ -488,11 +477,7 @@ class DeliveryFailuresDomainResource(PageableResource[_SyncClientImpl, FailureDe
             options: FailureDeliveryFailureDomainRequest | None = None,
     ) -> FailureDeliveryFailureDomainPage:
         """Retrieve delivery failures grouped by domain."""
-        page = self._retrieve_page(HTTPMethod.POST, options)
-        response = page._response
-        if response is None:
-            raise RuntimeError("page response metadata is unavailable")
-        return FailureDeliveryFailureDomainPage(page, info=page.info, response=response)
+        return self._retrieve_page_as(FailureDeliveryFailureDomainPage, HTTPMethod.POST, options)
 
 class DeliveryFailuresResource(SyncResource[_SyncClientImpl]):
     """Delivery failures report grouping."""
