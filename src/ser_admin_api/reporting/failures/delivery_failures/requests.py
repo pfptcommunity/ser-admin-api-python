@@ -2,78 +2,22 @@ from __future__ import annotations
 
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
+from typing import Self
+
 from klarient import (
-    HTTPMethod,
     HTTPRequestOptions,
     JSONBody,
     JSONBodyRequest,
-    Page,
     PageNumberState,
-    PageableResource,
     RequestField,
-    SyncResource,
     list_of,
 )
-from klarient.http.client import _SyncClientImpl
-from typing import Any, Self
 
-from ser_admin_api.common import SERPagination, SERValueEncoder, SERTotalCountPagination, SortDirection
-from ser_admin_api.common.models import ResponseMetadata, _integer, _string_list, _string_value
+from ser_admin_api.common import SERValueEncoder, SortDirection
 from ser_admin_api.reporting.failures.common import _encoded_date_filter, _range_fields, _set_exact_or_range_fields
 
 
-class FailureDeliveryFailureRecipient(dict[str, Any]):
-    """One row from relay-user delivery-failures recipient reports."""
-
-    @property
-    def recipient(self) -> str:
-        """Message recipient."""
-        return _string_value(self, "recipient")
-
-    @property
-    def dsn_code(self) -> str:
-        """Delivery status notification code."""
-        return _string_value(self, "dsnCode")
-
-    @property
-    def details(self) -> str:
-        """Details of the delivery failure."""
-        return _string_value(self, "details")
-
-    @property
-    def count(self) -> int:
-        """Total delivery failures."""
-        return _integer(self.get("count"))
-
-    @property
-    def last_failed_date(self) -> str:
-        """Date of last failure."""
-        return _string_value(self, "lastFailedDate")
-
-class FailureDeliveryFailureDomain(dict[str, Any]):
-    """One row from delivery-failures domain reports."""
-
-    @property
-    def domain(self) -> str:
-        """Domain for delivery failure."""
-        return _string_value(self, "domain")
-
-    @property
-    def dsn_code(self) -> str:
-        """Delivery status notification code."""
-        return _string_value(self, "dsnCode")
-
-    @property
-    def details(self) -> str:
-        """Details of the delivery failure."""
-        return _string_value(self, "details")
-
-    @property
-    def count(self) -> int:
-        """Total delivery failures."""
-        return _integer(self.get("count"))
-
-class FailureDeliveryFailureRecipientSortField(StrEnum):
+class RecipientSortField(StrEnum):
     """Sort fields accepted by delivery-failures recipient reports."""
 
     RECIPIENT = "recipient"
@@ -81,7 +25,8 @@ class FailureDeliveryFailureRecipientSortField(StrEnum):
     COUNT = "count"
     LAST_FAILED_DATE = "lastFailedDate"
 
-class FailureDeliveryFailureRecipientRequest(JSONBodyRequest):
+
+class RecipientRequest(JSONBodyRequest):
     """JSON body for relay-user delivery-failures recipient reports."""
 
     def __init__(
@@ -91,7 +36,7 @@ class FailureDeliveryFailureRecipientRequest(JSONBodyRequest):
             start_date: Date | DateTime | str | None = None,
             end_date: Date | DateTime | str | None = None,
             dsn_codes: str | list[str] | None = None,
-            order_by: FailureDeliveryFailureRecipientSortField | None = None,
+            order_by: RecipientSortField | None = None,
             order_dir: SortDirection | str | None = None,
             page: int | None = None,
             size: int | None = None,
@@ -117,9 +62,9 @@ class FailureDeliveryFailureRecipientRequest(JSONBodyRequest):
         value_type=(str, list),
         validator=lambda value: list_of(str)(value) if isinstance(value, list) else None,
     )
-    order_by = RequestField[FailureDeliveryFailureRecipientSortField](
+    order_by = RequestField[RecipientSortField](
         name="orderBy",
-        value_type=FailureDeliveryFailureRecipientSortField,
+        value_type=RecipientSortField,
     )
     order_dir = RequestField[SortDirection | str](name="orderDir", value_type=(SortDirection, str))
     page = RequestField[int](name="pageNum", value_type=int)
@@ -178,7 +123,8 @@ class FailureDeliveryFailureRecipientRequest(JSONBodyRequest):
             page_size=self.size if self.size is not None else default.page_size,
         )
 
-class FailureTagDeliveryFailureRecipientRequest(JSONBodyRequest):
+
+class TagRecipientRequest(JSONBodyRequest):
     """JSON body for tag delivery-failures recipient reports."""
 
     def __init__(
@@ -188,7 +134,7 @@ class FailureTagDeliveryFailureRecipientRequest(JSONBodyRequest):
             start_date: Date | DateTime | str | None = None,
             end_date: Date | DateTime | str | None = None,
             dsn_code: str | None = None,
-            order_by: FailureDeliveryFailureRecipientSortField | None = None,
+            order_by: RecipientSortField | None = None,
             order_dir: SortDirection | str | None = None,
             page: int | None = None,
             size: int | None = None,
@@ -210,9 +156,9 @@ class FailureTagDeliveryFailureRecipientRequest(JSONBodyRequest):
     start_date = RequestField[Date | DateTime | str](name="dates[gte]", value_type=(Date, DateTime, str))
     end_date = RequestField[Date | DateTime | str](name="dates[lte]", value_type=(Date, DateTime, str))
     dsn_code = RequestField[str](name="dsnCode", value_type=str)
-    order_by = RequestField[FailureDeliveryFailureRecipientSortField](
+    order_by = RequestField[RecipientSortField](
         name="orderBy",
-        value_type=FailureDeliveryFailureRecipientSortField,
+        value_type=RecipientSortField,
     )
     order_dir = RequestField[SortDirection | str](name="orderDir", value_type=(SortDirection, str))
     page = RequestField[int](name="pageNum", value_type=int)
@@ -266,13 +212,15 @@ class FailureTagDeliveryFailureRecipientRequest(JSONBodyRequest):
             page_size=self.size if self.size is not None else default.page_size,
         )
 
-class FailureDeliveryFailureDomainSortField(StrEnum):
+
+class DomainSortField(StrEnum):
     """Sort fields accepted by delivery-failures domain reports."""
 
     DSN_CODE = "dsnCode"
     COUNT = "count"
 
-class FailureDeliveryFailureDomainRequest(JSONBodyRequest):
+
+class DomainRequest(JSONBodyRequest):
     """JSON body for delivery-failures domain reports."""
 
     def __init__(
@@ -283,7 +231,7 @@ class FailureDeliveryFailureDomainRequest(JSONBodyRequest):
             end_date: Date | DateTime | str | None = None,
             dsn_code: str | list[str] | None = None,
             domain: str | None = None,
-            order_by: FailureDeliveryFailureDomainSortField | None = None,
+            order_by: DomainSortField | None = None,
             order_dir: SortDirection | str | None = None,
             page: int | None = None,
             size: int | None = None,
@@ -311,9 +259,9 @@ class FailureDeliveryFailureDomainRequest(JSONBodyRequest):
         validator=lambda value: list_of(str)(value) if isinstance(value, list) else None,
     )
     domain = RequestField[str](value_type=str)
-    order_by = RequestField[FailureDeliveryFailureDomainSortField](
+    order_by = RequestField[DomainSortField](
         name="orderBy",
-        value_type=FailureDeliveryFailureDomainSortField,
+        value_type=DomainSortField,
     )
     order_dir = RequestField[SortDirection | str](name="orderDir", value_type=(SortDirection, str))
     page = RequestField[int](name="pageNum", value_type=int)
@@ -377,153 +325,3 @@ class FailureDeliveryFailureDomainRequest(JSONBodyRequest):
             page_number=self.page if self.page is not None else default.page_number,
             page_size=self.size if self.size is not None else default.page_size,
         )
-
-class FailureDeliveryFailureRecipientMetadata(ResponseMetadata):
-    """Metadata envelope for delivery-failures recipient pages."""
-
-    @property
-    def dsn_codes(self) -> list[str]:
-        """DSN codes returned in response metadata."""
-        return _string_list(self.get("dsnCodes"))
-
-    @property
-    def recipients(self) -> list[str]:
-        """Recipients returned in response metadata."""
-        return _string_list(self.get("recipients"))
-
-
-class FailureDeliveryFailureDomainMetadata(ResponseMetadata):
-    """Metadata envelope for delivery-failures domain pages."""
-
-    @property
-    def dsn_codes(self) -> list[str]:
-        """DSN codes returned in response metadata."""
-        return _string_list(self.get("dsnCodes"))
-
-    @property
-    def domains(self) -> list[str]:
-        """Domains returned in response metadata."""
-        return _string_list(self.get("domains"))
-
-
-class FailureDeliveryFailureRecipientPage(Page[FailureDeliveryFailureRecipient]):
-    """Page of delivery-failures recipient rows with report metadata."""
-
-    @property
-    def metadata(self) -> FailureDeliveryFailureRecipientMetadata:
-        """Response metadata envelope for this page."""
-        return FailureDeliveryFailureRecipientMetadata.from_payload(self.payload)
-
-    @property
-    def dsn_codes(self) -> list[str]:
-        """DSN codes returned in response metadata."""
-        return self.metadata.dsn_codes
-
-    @property
-    def recipients(self) -> list[str]:
-        """Recipients returned in response metadata."""
-        return self.metadata.recipients
-
-class FailureDeliveryFailureDomainPage(Page[FailureDeliveryFailureDomain]):
-    """Page of delivery-failures domain rows with report metadata."""
-
-    @property
-    def metadata(self) -> FailureDeliveryFailureDomainMetadata:
-        """Response metadata envelope for this page."""
-        return FailureDeliveryFailureDomainMetadata.from_payload(self.payload)
-
-    @property
-    def dsn_codes(self) -> list[str]:
-        """DSN codes returned in response metadata."""
-        return self.metadata.dsn_codes
-
-    @property
-    def domains(self) -> list[str]:
-        """Domains returned in response metadata."""
-        return self.metadata.domains
-
-class DeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, FailureDeliveryFailureRecipient, PageNumberState]):
-    """Delivery failures by recipient endpoint."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureDeliveryFailureRecipient,
-            page_model=FailureDeliveryFailureRecipientPage,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(
-            self,
-            options: FailureDeliveryFailureRecipientRequest | None = None,
-    ) -> FailureDeliveryFailureRecipientPage:
-        """Retrieve delivery failures grouped by recipient."""
-        return self._retrieve_page_as(FailureDeliveryFailureRecipientPage, HTTPMethod.POST, options)
-
-class TagDeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, FailureDeliveryFailureRecipient, PageNumberState]):
-    """Tag delivery failures by recipient endpoint."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureDeliveryFailureRecipient,
-            page_model=FailureDeliveryFailureRecipientPage,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(
-            self,
-            options: FailureTagDeliveryFailureRecipientRequest | None = None,
-    ) -> FailureDeliveryFailureRecipientPage:
-        """Retrieve tag delivery failures grouped by recipient."""
-        return self._retrieve_page_as(FailureDeliveryFailureRecipientPage, HTTPMethod.POST, options)
-
-class DeliveryFailuresDomainResource(PageableResource[_SyncClientImpl, FailureDeliveryFailureDomain, PageNumberState]):
-    """Delivery failures by domain endpoint."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureDeliveryFailureDomain,
-            page_model=FailureDeliveryFailureDomainPage,
-            pagination=SERTotalCountPagination(),
-            **kwargs,
-        )
-
-    def retrieve(
-            self,
-            options: FailureDeliveryFailureDomainRequest | None = None,
-    ) -> FailureDeliveryFailureDomainPage:
-        """Retrieve delivery failures grouped by domain."""
-        return self._retrieve_page_as(FailureDeliveryFailureDomainPage, HTTPMethod.POST, options)
-
-class DeliveryFailuresResource(SyncResource[_SyncClientImpl]):
-    """Delivery failures report grouping."""
-
-    @property
-    def recipient(self) -> DeliveryFailuresRecipientResource:
-        """Recipient delivery failures resource."""
-        return DeliveryFailuresRecipientResource(self, segment="recipient")
-
-    @property
-    def domain(self) -> DeliveryFailuresDomainResource:
-        """Domain delivery failures resource."""
-        return DeliveryFailuresDomainResource(self, segment="domain")
-
-class TagDeliveryFailuresResource(SyncResource[_SyncClientImpl]):
-    """Tag delivery failures report grouping."""
-
-    @property
-    def recipient(self) -> TagDeliveryFailuresRecipientResource:
-        """Recipient delivery failures resource."""
-        return TagDeliveryFailuresRecipientResource(self, segment="recipient")
-
-    @property
-    def domain(self) -> DeliveryFailuresDomainResource:
-        """Domain delivery failures resource."""
-        return DeliveryFailuresDomainResource(self, segment="domain")
