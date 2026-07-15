@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ser_admin_api.common.models import _integer, _string_list, _string_value
+from ser_admin_api.common.models import ResponseMetadata, _integer, _string_list, _string_value
 
 
 class UsageMetrics(dict[str, Any]):
@@ -276,7 +276,7 @@ class UsageMessageTrend(dict[str, Any]):
         return _integer(self.get("sentMessages"))
 
 
-class UsageMessageTrendMetadata(dict[str, Any]):
+class UsageMessageTrendMetadata(ResponseMetadata):
     """Metadata totals returned by /v1/usage/message-trend."""
 
     @property
@@ -314,7 +314,7 @@ class UsageDataTrend(dict[str, Any]):
         return _string_value(self, "throughput")
 
 
-class UsageDataTrendMetadata(dict[str, Any]):
+class UsageDataTrendMetadata(ResponseMetadata):
     """Metadata totals returned by /v1/usage/data-trend."""
 
     @property

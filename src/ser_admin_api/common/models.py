@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Self
 
 
 # These helpers keep open JSON payload wrappers null-safe while still allowing
@@ -60,6 +60,14 @@ class PaginationMetadata(dict[str, Any]):
 
 class ResponseMetadata(dict[str, Any]):
     """Metadata envelope returned by SER list and mutation responses."""
+
+    @classmethod
+    def from_payload(cls, payload: object) -> Self:
+        """Build metadata from a decoded SER response payload."""
+        if not isinstance(payload, Mapping):
+            return cls({})
+        value = payload.get("metadata", {})
+        return cls(value if isinstance(value, Mapping) else {})
 
     @property
     def pagination(self) -> PaginationMetadata:

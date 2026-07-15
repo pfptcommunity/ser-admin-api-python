@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
 from klarient import (
@@ -19,7 +18,7 @@ from klarient.http.client import _SyncClientImpl
 from typing import Any, Self
 
 from ser_admin_api.common import SERPagination, SERValueEncoder, SERTotalCountPagination, SortDirection
-from ser_admin_api.common.models import _integer, _string_list, _string_value
+from ser_admin_api.common.models import ResponseMetadata, _integer, _string_list, _string_value
 from ser_admin_api.reporting.failures.common import _encoded_date_filter, _range_fields, _set_exact_or_range_fields
 
 
@@ -379,45 +378,69 @@ class FailureDeliveryFailureDomainRequest(JSONBodyRequest):
             page_size=self.size if self.size is not None else default.page_size,
         )
 
-class FailureDeliveryFailureRecipientPage(Page[FailureDeliveryFailureRecipient]):
-    """Page of delivery-failures recipient rows with report metadata."""
+class FailureDeliveryFailureRecipientMetadata(ResponseMetadata):
+    """Metadata envelope for delivery-failures recipient pages."""
 
     @property
     def dsn_codes(self) -> list[str]:
         """DSN codes returned in response metadata."""
-        metadata = self._metadata()
-        return _string_list(metadata.get("dsnCodes"))
+        return _string_list(self.get("dsnCodes"))
 
     @property
     def recipients(self) -> list[str]:
         """Recipients returned in response metadata."""
-        metadata = self._metadata()
-        return _string_list(metadata.get("recipients"))
+        return _string_list(self.get("recipients"))
 
-    def _metadata(self) -> Mapping[str, object]:
-        payload = self.payload
-        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
-        return metadata if isinstance(metadata, Mapping) else {}
+
+class FailureDeliveryFailureDomainMetadata(ResponseMetadata):
+    """Metadata envelope for delivery-failures domain pages."""
+
+    @property
+    def dsn_codes(self) -> list[str]:
+        """DSN codes returned in response metadata."""
+        return _string_list(self.get("dsnCodes"))
+
+    @property
+    def domains(self) -> list[str]:
+        """Domains returned in response metadata."""
+        return _string_list(self.get("domains"))
+
+
+class FailureDeliveryFailureRecipientPage(Page[FailureDeliveryFailureRecipient]):
+    """Page of delivery-failures recipient rows with report metadata."""
+
+    @property
+    def metadata(self) -> FailureDeliveryFailureRecipientMetadata:
+        """Response metadata envelope for this page."""
+        return FailureDeliveryFailureRecipientMetadata.from_payload(self.payload)
+
+    @property
+    def dsn_codes(self) -> list[str]:
+        """DSN codes returned in response metadata."""
+        return self.metadata.dsn_codes
+
+    @property
+    def recipients(self) -> list[str]:
+        """Recipients returned in response metadata."""
+        return self.metadata.recipients
 
 class FailureDeliveryFailureDomainPage(Page[FailureDeliveryFailureDomain]):
     """Page of delivery-failures domain rows with report metadata."""
 
     @property
+    def metadata(self) -> FailureDeliveryFailureDomainMetadata:
+        """Response metadata envelope for this page."""
+        return FailureDeliveryFailureDomainMetadata.from_payload(self.payload)
+
+    @property
     def dsn_codes(self) -> list[str]:
         """DSN codes returned in response metadata."""
-        metadata = self._metadata()
-        return _string_list(metadata.get("dsnCodes"))
+        return self.metadata.dsn_codes
 
     @property
     def domains(self) -> list[str]:
         """Domains returned in response metadata."""
-        metadata = self._metadata()
-        return _string_list(metadata.get("domains"))
-
-    def _metadata(self) -> Mapping[str, object]:
-        payload = self.payload
-        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
-        return metadata if isinstance(metadata, Mapping) else {}
+        return self.metadata.domains
 
 class DeliveryFailuresRecipientResource(PageableResource[_SyncClientImpl, FailureDeliveryFailureRecipient, PageNumberState]):
     """Delivery failures by recipient endpoint."""
