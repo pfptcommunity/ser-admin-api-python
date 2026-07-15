@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
 from klarient import (
@@ -17,7 +16,7 @@ from klarient.http.client import _SyncClientImpl
 from typing import Any, Self
 
 from ser_admin_api.common import SERPagination, SERValueEncoder, SERTotalCountPagination
-from ser_admin_api.common.models import _integer, _string_list, _string_value
+from ser_admin_api.common.models import ResponseMetadata, _integer, _string_list, _string_value
 from ser_admin_api.reporting.failures.common import _range_fields, _set_exact_or_range_fields
 
 
@@ -133,17 +132,27 @@ class FailurePolicyViolationsQuery(QueryRequest):
             page_size=self.size if self.size is not None else default.page_size,
         )
 
-class FailurePolicyViolationsPage(Page[FailurePolicyViolation]):
-    """Page of policy violations with report metadata."""
+class FailurePolicyViolationsMetadata(ResponseMetadata):
+    """Metadata envelope for policy-violation failure pages."""
 
     @property
     def policy_types(self) -> list[str]:
         """Policy types returned in response metadata."""
-        payload = self.payload
-        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
-        if not isinstance(metadata, Mapping):
-            return []
-        return _string_list(metadata.get("policyTypes"))
+        return _string_list(self.get("policyTypes"))
+
+
+class FailurePolicyViolationsPage(Page[FailurePolicyViolation]):
+    """Page of policy violations with report metadata."""
+
+    @property
+    def metadata(self) -> FailurePolicyViolationsMetadata:
+        """Response metadata envelope for this page."""
+        return FailurePolicyViolationsMetadata.from_payload(self.payload)
+
+    @property
+    def policy_types(self) -> list[str]:
+        """Policy types returned in response metadata."""
+        return self.metadata.policy_types
 
 class PolicyViolationsResource(PageableResource[_SyncClientImpl, FailurePolicyViolation, PageNumberState]):
     """Policy violations endpoint."""

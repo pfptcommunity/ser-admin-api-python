@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import date as Date, datetime as DateTime
 from klarient import HTTPRequestOptions, JSONBody, JSONBodyRequest, RequestField, ResponseMap, SyncResource, list_of
 from klarient.http.client import _SyncClientImpl
 from typing import Any, Self
 
 from ser_admin_api.common import SERValueEncoder
-from ser_admin_api.common.models import _integer, _rows, _string_value
+from ser_admin_api.common.models import ResponseMetadata, _integer, _rows, _string_value
 from ser_admin_api.reporting.failures.common import ReportInterval, _encoded_date_filter, _range_fields, _set_exact_or_range_fields
 
 
@@ -49,7 +48,7 @@ class FailureMessageTrend(dict[str, Any]):
         """Quarantined message count."""
         return _integer(self.get("quarantinedMessages"))
 
-class FailureMessageTrendMetadata(dict[str, Any]):
+class FailureMessageTrendMetadata(ResponseMetadata):
     """Metadata totals returned by /v1/failures/message-trend."""
 
     @property
@@ -164,8 +163,7 @@ class FailureMessageTrendResponse(ResponseMap):
     @property
     def metadata(self) -> FailureMessageTrendMetadata:
         """Failure message trend metadata totals."""
-        value = self.get("metadata", {})
-        return FailureMessageTrendMetadata(value if isinstance(value, Mapping) else {})
+        return FailureMessageTrendMetadata.from_payload(self)
 
 class MessageTrendResource(SyncResource[_SyncClientImpl]):
     """Failure message trend endpoint."""

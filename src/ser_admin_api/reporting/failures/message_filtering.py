@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
 from klarient import (
@@ -18,7 +17,7 @@ from klarient.http.client import _SyncClientImpl
 from typing import Any, Self
 
 from ser_admin_api.common import SERPagination, SERValueEncoder
-from ser_admin_api.common.models import _integer, _string_list, _string_value
+from ser_admin_api.common.models import ResponseMetadata, _integer, _string_list, _string_value
 from ser_admin_api.reporting.failures.common import _encoded_date_filter, _range_fields, _set_exact_or_range_fields
 
 
@@ -162,25 +161,37 @@ class FailureMessageFilteringRequest(JSONBodyRequest):
             page_size=self.size if self.size is not None else default.page_size,
         )
 
-class FailureMessageFilteringPage(Page[FailureMessageFiltering]):
-    """Page of message-filtering rows with report metadata."""
+class FailureMessageFilteringMetadata(ResponseMetadata):
+    """Metadata envelope for message-filtering failure pages."""
 
     @property
     def final_actions(self) -> list[str]:
         """Final actions returned in response metadata."""
-        metadata = self._metadata()
-        return _string_list(metadata.get("finalActions"))
+        return _string_list(self.get("finalActions"))
 
     @property
     def final_rules(self) -> list[str]:
         """Final rules returned in response metadata."""
-        metadata = self._metadata()
-        return _string_list(metadata.get("finalRules"))
+        return _string_list(self.get("finalRules"))
 
-    def _metadata(self) -> Mapping[str, object]:
-        payload = self.payload
-        metadata = payload.get("metadata", {}) if isinstance(payload, Mapping) else {}
-        return metadata if isinstance(metadata, Mapping) else {}
+
+class FailureMessageFilteringPage(Page[FailureMessageFiltering]):
+    """Page of message-filtering rows with report metadata."""
+
+    @property
+    def metadata(self) -> FailureMessageFilteringMetadata:
+        """Response metadata envelope for this page."""
+        return FailureMessageFilteringMetadata.from_payload(self.payload)
+
+    @property
+    def final_actions(self) -> list[str]:
+        """Final actions returned in response metadata."""
+        return self.metadata.final_actions
+
+    @property
+    def final_rules(self) -> list[str]:
+        """Final rules returned in response metadata."""
+        return self.metadata.final_rules
 
 class MessageFilteringResource(PageableResource[_SyncClientImpl, FailureMessageFiltering, PageNumberState]):
     """Message filtering failures endpoint."""

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from klarient import HTTPResponse, JSONDecoder, ResponseDecoder, ResponseMap
 from typing import Any
 
@@ -23,8 +22,7 @@ class SERResponseMap(ResponseMap):
     @property
     def metadata(self) -> ResponseMetadata:
         """Typed metadata envelope from the response."""
-        value = self.get("metadata", {})
-        return ResponseMetadata(value if isinstance(value, Mapping) else {})
+        return ResponseMetadata.from_payload(self)
 
     @property
     def total(self) -> int | None:

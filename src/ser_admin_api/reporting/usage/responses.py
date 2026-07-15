@@ -59,8 +59,7 @@ class UsageMessageTrendResponse(ResponseMap):
     @property
     def metadata(self) -> UsageMessageTrendMetadata:
         """Usage message trend metadata totals."""
-        value = self.get("metadata", {})
-        return UsageMessageTrendMetadata(value if isinstance(value, Mapping) else {})
+        return UsageMessageTrendMetadata.from_payload(self)
 
 
 class UsageDataTrendResponse(ResponseMap):
@@ -74,8 +73,7 @@ class UsageDataTrendResponse(ResponseMap):
     @property
     def metadata(self) -> UsageDataTrendMetadata:
         """Usage data trend metadata totals."""
-        value = self.get("metadata", {})
-        return UsageDataTrendMetadata(value if isinstance(value, Mapping) else {})
+        return UsageDataTrendMetadata.from_payload(self)
 
 
 class UsageForecastTrendResponse(ResponseMap):
