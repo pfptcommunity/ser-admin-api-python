@@ -96,7 +96,7 @@ class TagResource(SyncResource[_SyncClientImpl]):
     def update(
             self,
             *,
-            name: str | None = None,
+            name: str,
             description: str | None = None,
             contacts: list[str] | None = None,
     ) -> TagResponse:

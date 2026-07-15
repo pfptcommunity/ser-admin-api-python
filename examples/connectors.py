@@ -91,7 +91,7 @@ def show_connector_request_shapes() -> None:
 
     print(f"create_request={create_request.to_mapping()}")
     print(f"update_request={update_request.to_mapping()}")
-    print(f"status_request={status_request.to_mapping()}")
+    print(f"status_request={status_request.to_list()}")
     print(f"credential_request={credential_request.to_mapping()}")
 
     # created = client.connector_config.connectors.create(create_request)

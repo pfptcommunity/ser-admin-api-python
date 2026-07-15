@@ -25,7 +25,7 @@ class DateRangeQuery(QueryRequest):
             timezone: str | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             start_date=start_date,
             end_date=end_date,
             timezone=timezone,
@@ -76,7 +76,7 @@ class ReportRequest(JSONBodyRequest):
             tag_ids: list[int | str] | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             start_date=start_date,
             end_date=end_date,
             timezone=timezone,

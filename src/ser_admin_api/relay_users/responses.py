@@ -6,6 +6,7 @@ from ser_admin_api.common import SERResponseMap
 from ser_admin_api.common.models import _rows, _string_list
 from ser_admin_api.relay_users.models import (
     RelayUserMetadata,
+    RelayUserDetail,
     RelayUserCredential,
     ClusterInfo,
     PreferredUsername,
@@ -38,10 +39,10 @@ class RelayUserResponse(SERResponseMap):
     """Response wrapper for one relay user."""
 
     @property
-    def data(self) -> RelayUserMetadata:
-        """Relay user metadata returned by the endpoint."""
+    def data(self) -> RelayUserDetail:
+        """Full relay user details returned by the endpoint."""
         value = self.get("data", {})
-        return RelayUserMetadata(value if isinstance(value, Mapping) else {})
+        return RelayUserDetail(value if isinstance(value, Mapping) else {})
 
 
 class RelayUserNamesResponse(SERResponseMap):

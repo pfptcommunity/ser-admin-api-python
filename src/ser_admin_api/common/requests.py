@@ -21,7 +21,7 @@ class PageQuery(QueryRequest):
             search: str | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             page=page,
             size=size,
             sort=sort,
@@ -81,7 +81,7 @@ class GeneratedCredential(RequestFields):
             exclude_symbols: list[str] | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
+        self._set_optional_fields(
             length=length,
             allow_numbers=allow_numbers,
             allow_lowercase=allow_lowercase,
@@ -148,14 +148,16 @@ class CredentialUpdate(JSONBodyRequest):
             grace_period: int | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_explicit_fields(
             credential_expiration_date=credential_expiration_date,
+        )
+        self._set_optional_fields(
             custom_credential=custom_credential,
             generate_credential=generate_credential,
             grace_period=grace_period,
         )
 
-    credential_expiration_date = RequestField[date | datetime | str](
+    credential_expiration_date = RequestField[date | datetime | str | None](
         name="credentialExpirationDate",
         value_type=(date, datetime, str),
     )
@@ -265,7 +267,7 @@ class SearchRequest(JSONBodyRequest):
             direction: SortDirection | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             search=search,
             page=page,
             size=size,

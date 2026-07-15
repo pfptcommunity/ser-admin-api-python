@@ -81,7 +81,7 @@ class UnsubscribeListQuery(QueryRequest):
             order_dir: SortDirection | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(page=page, size=size)
+        self._set_optional_fields(page=page, size=size)
         set_exact_or_range(
             self,
             "creation_date",
@@ -103,7 +103,7 @@ class UnsubscribeListQuery(QueryRequest):
             gte=last_unsubscribe_date_gte,
             lte=last_unsubscribe_date_lte,
         )
-        self._set_defined_fields(
+        self._set_optional_fields(
             unsubscribe_count_gte=unsubscribe_count_gte,
             unsubscribe_count_lte=unsubscribe_count_lte,
             relay_user_count_gte=relay_user_count_gte,
@@ -227,7 +227,7 @@ class UnsubscribeListCreate(JSONBodyRequest):
             addresses: list[str] | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
+        self._set_optional_fields(
             name=name,
             description=description,
             addresses=addresses,
@@ -315,7 +315,7 @@ class UnsubscribeNamesQuery(QueryRequest):
 
     def __init__(self, *, search: str | None = None) -> None:
         super().__init__()
-        self._set_defined_fields(search=search)
+        self._set_optional_fields(search=search)
 
     search = RequestField[str](value_type=str)
 
@@ -338,7 +338,7 @@ class UnsubscribeAddressesQuery(QueryRequest):
             order_dir: SortDirection | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
+        self._set_optional_fields(
             page=page,
             size=size,
             unsubscribe_address=unsubscribe_address,
@@ -396,7 +396,7 @@ class UnsubscribeRelayUsersQuery(QueryRequest):
             order_dir: SortDirection | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
+        self._set_optional_fields(
             page=page,
             size=size,
             search=search,
@@ -461,7 +461,7 @@ class UnsubscribeRequestsQuery(JSONBodyRequest):
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
         set_exact_or_range(self, "date", exact=date, gte=date_gte, lte=date_lte)
-        self._set_defined_fields(
+        self._set_optional_fields(
             order_by=order_by,
             order_dir=order_dir,
             page=page,

@@ -14,7 +14,7 @@ from klarient import (
     RequestFields,
     list_of,
 )
-from typing import Any, Self
+from typing import Self
 
 from ser_admin_api.common import CredentialUpdate, GeneratedCredential
 from ser_admin_api.common.encoding import SERValueEncoder
@@ -88,7 +88,7 @@ class VerifiedDomainsQuery(QueryRequest):
             direction: SortDirection | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             domain=domain,
             page=page,
             size=size,
@@ -145,7 +145,7 @@ class RelayUserNamesQuery(QueryRequest):
             relay_user_type: RelayUserType | list[RelayUserType] | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             name=name,
             search=search,
             relay_user_type=relay_user_type,
@@ -222,7 +222,7 @@ class RelayUsersQuery(QueryRequest):
             gte=credential_expiration_date_gte,
             lte=credential_expiration_date_lte,
         )
-        self._set_defined_fields(
+        self._set_optional_fields(
             name=name,
             page=page,
             size=size,
@@ -240,7 +240,7 @@ class RelayUsersQuery(QueryRequest):
             gte=updated_date_gte,
             lte=updated_date_lte,
         )
-        self._set_defined_fields(version=version)
+        self._set_optional_fields(version=version)
 
     creation_date = RequestField[date | datetime | str](value_type=(date, datetime, str))
     creation_date_gte = RequestField[date | datetime | str](
@@ -393,43 +393,138 @@ class RelayUsersQuery(QueryRequest):
         )
 
 
-class RelayUserCreate(JSONBodyRequest):
-    """Request body for creating a relay user."""
+class RelayUserAllowedAddress(RequestFields):
+    """Allowed mail/header from address pair for relay user updates."""
 
     def __init__(
             self,
             *,
-            username: str | None = None,
-            display_name: str | None = None,
-            domain: str | None = None,
-            allowed_address: list[Any] | None = None,
-            cluster_id: str | None = None,
-            credential_expiration_date: date | datetime | str | None = None,
-            custom_credential: str | None = None,
-            generate_credential: GeneratedCredential | None = None,
-            name: str | None = None,
-            tags: list[int | str] | None = None,
+            mail_from: str | None = None,
+            header_from: str | None = None,
     ) -> None:
-        super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
-            username=username,
-            display_name=display_name,
-            domain=domain,
-            allowed_address=allowed_address,
-            cluster_id=cluster_id,
-            credential_expiration_date=credential_expiration_date,
-            custom_credential=custom_credential,
-            generate_credential=generate_credential,
-            name=name,
-            tags=tags,
+        super().__init__()
+        self._set_optional_fields(mail_from=mail_from, header_from=header_from)
+
+    mail_from = RequestField[str](name="mailFrom", value_type=str)
+    header_from = RequestField[str](name="headerFrom", value_type=str)
+
+
+class RelayUserLimits(RequestFields):
+    """Custom relay user rate limits."""
+
+    def __init__(
+            self,
+            *,
+            messages_per_24_hours: int | None = None,
+            messages_per_1_hour: int | None = None,
+            throughput_per_24_hours: int | None = None,
+            throughput_per_1_hour: int | None = None,
+            total_throughput_limit: int | None = None,
+    ) -> None:
+        super().__init__()
+        self._set_optional_fields(
+            messages_per_24_hours=messages_per_24_hours,
+            messages_per_1_hour=messages_per_1_hour,
+            throughput_per_24_hours=throughput_per_24_hours,
+            throughput_per_1_hour=throughput_per_1_hour,
+            total_throughput_limit=total_throughput_limit,
         )
 
-    username = RequestField[str](value_type=str)
-    display_name = RequestField[str](name="displayName", value_type=str)
-    domain = RequestField[str](value_type=str)
-    allowed_address = RequestField[list[Any]](name="allowedAddress", value_type=list)
+    messages_per_24_hours = RequestField[int](name="messagesPer24Hours", value_type=int)
+    messages_per_1_hour = RequestField[int](name="messagesPer1Hour", value_type=int)
+    throughput_per_24_hours = RequestField[int](name="throughputPer24Hours", value_type=int)
+    throughput_per_1_hour = RequestField[int](name="throughputPer1Hour", value_type=int)
+    total_throughput_limit = RequestField[int](name="totalThroughputLimit", value_type=int)
+
+
+class RelayUserRewriteRule(RequestFields):
+    """Sender rewrite rule for relay user updates."""
+
+    def __init__(
+            self,
+            *,
+            sender_rewrite_id: str | None = None,
+            rewrite_from: str | None = None,
+            rewrite_to: str | None = None,
+            header_from_enabled: bool | None = None,
+            envelope_from_enabled: bool | None = None,
+            reply_to_enabled: bool | None = None,
+    ) -> None:
+        super().__init__()
+        self._set_optional_fields(
+            sender_rewrite_id=sender_rewrite_id,
+            rewrite_from=rewrite_from,
+            rewrite_to=rewrite_to,
+            header_from_enabled=header_from_enabled,
+            envelope_from_enabled=envelope_from_enabled,
+            reply_to_enabled=reply_to_enabled,
+        )
+
+    sender_rewrite_id = RequestField[str](name="senderRewriteId", value_type=str)
+    rewrite_from = RequestField[str](name="rewriteFrom", value_type=str)
+    rewrite_to = RequestField[str](name="rewriteTo", value_type=str)
+    header_from_enabled = RequestField[bool](name="headerFromEnabled", value_type=bool)
+    envelope_from_enabled = RequestField[bool](name="envelopeFromEnabled", value_type=bool)
+    reply_to_enabled = RequestField[bool](name="replyToEnabled", value_type=bool)
+
+
+class RelayUserCreate(JSONBodyRequest):
+    """Request body for creating a relay user.
+
+    The live relay-user API requires allowedAddress, clusterId,
+    credentialExpirationDate, and name. It also requires either
+    customCredential or generateCredential before the request is sent.
+    """
+
+    def __init__(
+            self,
+            cluster_id: str,
+            name: str,
+            allowed_addresses: list[RelayUserAllowedAddress] | None = None,
+            *,
+            credential_expiration_date: date | datetime | str | None = None,
+            allowed_ips: list[str] | None = None,
+            contact_email: list[str] | None = None,
+            custom_credential: str | None = None,
+            generate_credential: GeneratedCredential | None = None,
+            internal_only: bool | None = None,
+            limits: RelayUserLimits | None = None,
+            max_msg_size: int | None = None,
+            preferred_username: str | None = None,
+            rewrite_rules: list[RelayUserRewriteRule] | None = None,
+            tags: list[int | str] | None = None,
+            unsubscribe_list_id: str | None = None,
+    ) -> None:
+        super().__init__(encoder=SERValueEncoder())
+        self.cluster_id = cluster_id
+        self.name = name
+        self._set_explicit_fields(
+            credential_expiration_date=credential_expiration_date,
+        )
+        self._set_optional_fields(
+            allowed_address=allowed_addresses,
+            allowed_ips=allowed_ips,
+            contact_email=contact_email,
+            custom_credential=custom_credential,
+            generate_credential=generate_credential,
+            internal_only=internal_only,
+            limits=limits,
+            max_msg_size=max_msg_size,
+            preferred_username=preferred_username,
+            rewrite_rules=rewrite_rules,
+            tags=tags,
+            unsubscribe_list_id=unsubscribe_list_id,
+        )
+
+    allowed_address = RequestField[list[RelayUserAllowedAddress]](
+        name="allowedAddress",
+        value_type=list,
+        validator=list_of(RelayUserAllowedAddress),
+    )
+    allowed_ips = RequestField[list[str]](name="allowedIps", value_type=list, validator=list_of(str))
     cluster_id = RequestField[str](name="clusterId", value_type=str)
-    credential_expiration_date = RequestField[date | datetime | str](
+    contact_email = RequestField[list[str]](name="contactEmail", value_type=list, validator=list_of(str))
+    credential_expiration_date = RequestField[date | datetime | str | None](
         name="credentialExpirationDate",
         value_type=(date, datetime, str),
     )
@@ -438,8 +533,18 @@ class RelayUserCreate(JSONBodyRequest):
         name="generateCredential",
         value_type=GeneratedCredential,
     )
+    internal_only = RequestField[bool](name="internalOnly", value_type=bool)
+    limits = RequestField[RelayUserLimits](value_type=RelayUserLimits)
+    max_msg_size = RequestField[int](name="maxMsgSize", value_type=int)
     name = RequestField[str](value_type=str)
+    preferred_username = RequestField[str](name="preferredUsername", value_type=str)
+    rewrite_rules = RequestField[list[RelayUserRewriteRule]](
+        name="rewriteRules",
+        value_type=list,
+        validator=list_of(RelayUserRewriteRule),
+    )
     tags = RequestField[list[int | str]](value_type=list, validator=list_of((int, str)))
+    unsubscribe_list_id = RequestField[str](name="unsubscribeListId", value_type=str)
 
     def with_tag(self, tag_id: int | str) -> Self:
         """Add one tag identifier to the relay user."""
@@ -457,14 +562,12 @@ class RelayUserCreate(JSONBodyRequest):
         ]
         return self
 
-    def expires_on(self, value: date | datetime | str) -> Self:
-        """Set credentialExpirationDate."""
-        self.credential_expiration_date = value
-        return self
-
-    def never_expires(self) -> Self:
-        """Set credentialExpirationDate to JSON null."""
-        self.credential_expiration_date = None
+    def with_allowed_addresses(self, addresses: list[RelayUserAllowedAddress]) -> Self:
+        """Add multiple allowedAddress entries."""
+        self.allowed_address = [
+            *(self.allowed_address or []),
+            *addresses,
+        ]
         return self
 
     def with_custom_credential(self, credential: str) -> Self:
@@ -495,80 +598,12 @@ class RelayUserCreate(JSONBodyRequest):
         )
         return self
 
-
-class RelayUserAllowedAddress(RequestFields):
-    """Allowed mail/header from address pair for relay user updates."""
-
-    def __init__(
-            self,
-            *,
-            mail_from: str | None = None,
-            header_from: str | None = None,
-    ) -> None:
-        super().__init__()
-        self._set_defined_fields(mail_from=mail_from, header_from=header_from)
-
-    mail_from = RequestField[str](name="mailFrom", value_type=str)
-    header_from = RequestField[str](name="headerFrom", value_type=str)
-
-
-class RelayUserLimits(RequestFields):
-    """Custom relay user rate limits."""
-
-    def __init__(
-            self,
-            *,
-            messages_per_24_hours: int | None = None,
-            messages_per_1_hour: int | None = None,
-            throughput_per_24_hours: int | None = None,
-            throughput_per_1_hour: int | None = None,
-            total_throughput_limit: int | None = None,
-    ) -> None:
-        super().__init__()
-        self._set_defined_fields(
-            messages_per_24_hours=messages_per_24_hours,
-            messages_per_1_hour=messages_per_1_hour,
-            throughput_per_24_hours=throughput_per_24_hours,
-            throughput_per_1_hour=throughput_per_1_hour,
-            total_throughput_limit=total_throughput_limit,
-        )
-
-    messages_per_24_hours = RequestField[int](name="messagesPer24Hours", value_type=int)
-    messages_per_1_hour = RequestField[int](name="messagesPer1Hour", value_type=int)
-    throughput_per_24_hours = RequestField[int](name="throughputPer24Hours", value_type=int)
-    throughput_per_1_hour = RequestField[int](name="throughputPer1Hour", value_type=int)
-    total_throughput_limit = RequestField[int](name="totalThroughputLimit", value_type=int)
-
-
-class RelayUserRewriteRule(RequestFields):
-    """Sender rewrite rule for relay user updates."""
-
-    def __init__(
-            self,
-            *,
-            sender_rewrite_id: str | None = None,
-            rewrite_from: str | None = None,
-            rewrite_to: str | None = None,
-            header_from_enabled: bool | None = None,
-            envelope_from_enabled: bool | None = None,
-            reply_to_enabled: bool | None = None,
-    ) -> None:
-        super().__init__()
-        self._set_defined_fields(
-            sender_rewrite_id=sender_rewrite_id,
-            rewrite_from=rewrite_from,
-            rewrite_to=rewrite_to,
-            header_from_enabled=header_from_enabled,
-            envelope_from_enabled=envelope_from_enabled,
-            reply_to_enabled=reply_to_enabled,
-        )
-
-    sender_rewrite_id = RequestField[str](name="senderRewriteId", value_type=str)
-    rewrite_from = RequestField[str](name="rewriteFrom", value_type=str)
-    rewrite_to = RequestField[str](name="rewriteTo", value_type=str)
-    header_from_enabled = RequestField[bool](name="headerFromEnabled", value_type=bool)
-    envelope_from_enabled = RequestField[bool](name="envelopeFromEnabled", value_type=bool)
-    reply_to_enabled = RequestField[bool](name="replyToEnabled", value_type=bool)
+    def _to_request_options(self) -> HTTPRequestOptions:
+        if not self.allowed_address:
+            raise ValueError("Relay user creation requires at least one allowed address")
+        if self.custom_credential is None and self.generate_credential is None:
+            raise ValueError("Relay user creation requires custom_credential or generate_credential")
+        return super()._to_request_options()
 
 
 class RelayUserUpdate(JSONBodyRequest):
@@ -591,7 +626,7 @@ class RelayUserUpdate(JSONBodyRequest):
             unsubscribe_list_id: str | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             allowed_address=allowed_address,
             allowed_ips=allowed_ips,
             cluster_id=cluster_id,
@@ -669,7 +704,7 @@ class RelayUserStatusUpdateItem(RequestFields):
             status: RelayUserStatus | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(relay_user_id=relay_user_id, status=status)
+        self._set_optional_fields(relay_user_id=relay_user_id, status=status)
 
     relay_user_id = RequestField[int | str](name="relayUserId", value_type=(int, str))
     status = RequestField[RelayUserStatus](value_type=RelayUserStatus)
@@ -684,7 +719,7 @@ class RelayUserStatusUpdate(JSONBodyRequest):
             updates: list[RelayUserStatusUpdateItem] | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(updates=updates)
+        self._set_optional_fields(updates=updates)
 
     updates = RequestField[list[RelayUserStatusUpdateItem]](
         value_type=list,
@@ -713,10 +748,16 @@ class RelayUserStatusUpdate(JSONBodyRequest):
 
     def to_list(self) -> list[dict[str, object]]:
         """Return the documented top-level JSON array body."""
-        return [
+        values = [
             update.to_mapping()
             for update in self.updates or []
         ]
+        if not values:
+            raise ValueError("Relay user status update requires at least one relay user")
+        for value in values:
+            if value.get("relayUserId") is None or value.get("status") is None:
+                raise ValueError("Relay user status update requires relay_user_id and status")
+        return values
 
     def _to_request_options(self) -> HTTPRequestOptions:
         return HTTPRequestOptions(body=JSONBody(self.to_list()))
@@ -763,7 +804,7 @@ class RelayUserSearch(JSONBodyRequest):
             gte=credential_expiration_date_gte,
             lte=credential_expiration_date_lte,
         )
-        self._set_defined_fields(
+        self._set_optional_fields(
             name=name,
             page=page,
             size=size,
@@ -781,7 +822,7 @@ class RelayUserSearch(JSONBodyRequest):
             gte=updated_date_gte,
             lte=updated_date_lte,
         )
-        self._set_defined_fields(version=version)
+        self._set_optional_fields(version=version)
 
     creation_date = RequestField[date | datetime | str | dict[str, date | datetime | str]](
         name="creationDate",
@@ -944,7 +985,25 @@ class _RelayUserNoteCreate(JSONBodyRequest):
 class RelayUserCredentialsUpdate(CredentialUpdate):
     """Request body for renewing relay user credentials."""
 
-    pass
+    def __init__(
+            self,
+            *,
+            credential_expiration_date: date | datetime | str | None = None,
+            custom_credential: str | None = None,
+            generate_credential: GeneratedCredential | None = None,
+            grace_period: int | None = None,
+    ) -> None:
+        super().__init__(
+            credential_expiration_date=credential_expiration_date,
+            custom_credential=custom_credential,
+            generate_credential=generate_credential,
+            grace_period=grace_period,
+        )
+
+    def _to_request_options(self) -> HTTPRequestOptions:
+        if self.custom_credential is None and self.generate_credential is None:
+            raise ValueError("Relay user credential update requires custom_credential or generate_credential")
+        return super()._to_request_options()
 
 
 class _RelayTagCreate(JSONBodyRequest):

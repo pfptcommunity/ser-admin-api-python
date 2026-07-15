@@ -27,6 +27,12 @@ def show_tag_resources(client: SERClient) -> None:
         TagDetailsQuery().with_sort(TagSortField.NAME, SortDirection.ASC)
     )
     print(f"download_status={download.status}")
+    for detail in download.data[:5]:
+        print(
+            "tag_detail="
+            f"{detail.tag_id} name={detail.name} "
+            f"assigned={detail.assigned_count} contacts={len(detail.contacts)}"
+        )
 
     if tags:
         tag_id = tags[0].tag_id
@@ -46,7 +52,7 @@ def show_tag_resources(client: SERClient) -> None:
 def show_tag_mutation_shapes() -> None:
     """Show concise tag mutation calls."""
     print("create_call=client.tag_management.tags.create('Example Tag', description='Created from an example.')")
-    print("update_call=client.tag_management.tags['tag-id'].update(description='Updated from an example.')")
+    print("update_call=client.tag_management.tags['tag-id'].update(name='Updated Tag', description='Updated from an example.')")
     print("note_call=client.tag_management.tags['tag-id'].notes.create('Example tag note')")
     print("delete_call=client.tag_management.tags['tag-id'].delete()")
 

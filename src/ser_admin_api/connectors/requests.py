@@ -67,7 +67,7 @@ class _ConnectorDownloadsQuery(QueryRequest):
             direction: SortDirection | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(limit=limit, sort=sort, direction=direction)
+        self._set_optional_fields(limit=limit, sort=sort, direction=direction)
 
     limit = RequestField[str](value_type=str)
     sort = RequestField[ConnectorDownloadSortField](
@@ -136,7 +136,7 @@ class ConnectorInfoQuery(QueryRequest):
             gte=credential_expiration_date_gte,
             lte=credential_expiration_date_lte,
         )
-        self._set_defined_fields(connector_id=connector_id)
+        self._set_optional_fields(connector_id=connector_id)
         set_exact_or_range(
             self,
             "last_sync_date",
@@ -144,7 +144,7 @@ class ConnectorInfoQuery(QueryRequest):
             gte=last_sync_date_gte,
             lte=last_sync_date_lte,
         )
-        self._set_defined_fields(
+        self._set_optional_fields(
             name=name,
             page=page,
             size=size,
@@ -398,7 +398,7 @@ class AdConnection(RequestFields):
             client_key_filename: str | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
+        self._set_optional_fields(
             authentication_hosts=authentication_hosts,
             authentication_port=authentication_port,
             bind_dn=bind_dn,
@@ -461,7 +461,7 @@ class ConnectorInternalRouting(RequestFields):
             tls_version: ConnectorTLSVersion | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
+        self._set_optional_fields(
             recipient=recipient,
             destinations=destinations,
             port=port,
@@ -495,7 +495,7 @@ class ConnectorCertAuth(RequestFields):
             ip_allow_list_enforcement: ConnectorIPAllowListEnforcement | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(
+        self._set_optional_fields(
             certificate_auth_status=certificate_auth_status,
             ip_allow_list_enforcement=ip_allow_list_enforcement,
         )
@@ -541,7 +541,10 @@ class ConnectorCreate(JSONBodyRequest):
         self.name = name
         self.port = port
         self.region = region
-        self._set_defined_fields(
+        self._set_explicit_fields(
+            credential_expiration_date=credential_expiration_date,
+        )
+        self._set_optional_fields(
             allowed_ips=allowed_ips,
             cert_auth=cert_auth,
             contact_email=contact_email,
@@ -549,7 +552,6 @@ class ConnectorCreate(JSONBodyRequest):
             ad_connection=ad_connection,
             note=note,
             tags=tags,
-            credential_expiration_date=credential_expiration_date,
             custom_credential=custom_credential,
             generate_credential=generate_credential,
         )
@@ -576,7 +578,7 @@ class ConnectorCreate(JSONBodyRequest):
     ad_connection = RequestField[AdConnection](name="adConnection", value_type=AdConnection)
     note = RequestField[str](value_type=str)
     tags = RequestField[list[str]](value_type=list, validator=list_of(str))
-    credential_expiration_date = RequestField[date | datetime | str](
+    credential_expiration_date = RequestField[date | datetime | str | None](
         name="credentialExpirationDate",
         value_type=(date, datetime, str),
     )
@@ -662,7 +664,7 @@ class ConnectorMetadata(JSONBodyRequest):
             tags: list[str] | None = None,
     ) -> None:
         super().__init__(encoder=SERValueEncoder())
-        self._set_defined_fields(
+        self._set_optional_fields(
             name=name,
             region=region,
             port=port,
@@ -737,7 +739,7 @@ class ConnectorStatusUpdate(JSONBodyRequest):
             status: ConnectorStatus | ResourceStatus | None = None,
     ) -> None:
         super().__init__()
-        self._set_defined_fields(connector_ids=connector_ids, status=status)
+        self._set_optional_fields(connector_ids=connector_ids, status=status)
 
     connector_ids = RequestField[list[int | str]](
         name="connectorIds",
@@ -756,16 +758,24 @@ class ConnectorStatusUpdate(JSONBodyRequest):
         self.status = status
         return self
 
+    def to_list(self) -> list[dict[str, object]]:
+        """Return the documented top-level JSON array body."""
+        status = str(self.status) if self.status is not None else None
+        values = [
+            {
+                "connectorId": connector_id,
+                "status": status,
+            }
+            for connector_id in self.connector_ids or []
+        ]
+        if not values:
+            raise ValueError("Connector status update requires at least one connector")
+        if self.status is None:
+            raise ValueError("Connector status update requires status")
+        return values
+
     def _to_request_options(self) -> HTTPRequestOptions:
-        return HTTPRequestOptions(
-            body=JSONBody([
-                {
-                    "connectorId": connector_id,
-                    "status": self.status,
-                }
-                for connector_id in self.connector_ids or []
-            ])
-        )
+        return HTTPRequestOptions(body=JSONBody(self.to_list()))
 
 
 class ConnectorSearch(SearchRequest):
@@ -791,6 +801,6 @@ class _ConnectorNoteCreate(JSONBodyRequest):
 
     def __init__(self, *, note: str | None = None) -> None:
         super().__init__()
-        self._set_defined_fields(note=note)
+        self._set_optional_fields(note=note)
 
     note = RequestField[str](value_type=str)
