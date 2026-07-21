@@ -281,12 +281,18 @@ print(create_request.to_mapping())
 ```
 
 ```python
-from ser_admin_api.relay_users import RelayUserUpdate
+from ser_admin_api.relay_users import RelayUserAllowedAddress, RelayUserUpdate
 
 relay_user = client.relay.relay_users["relay-user-id"].retrieve().data
 
 update_request = RelayUserUpdate(
-    allowed_address=relay_user.allowed_addresses_for_update(),
+    allowed_address=[
+        RelayUserAllowedAddress(
+            mail_from=address.mail_from,
+            header_from=address.header_from,
+        )
+        for address in relay_user.allowed_addresses
+    ],
 ).with_allowed_address(
     mail_from="new.example.com",
     header_from="new.example.com",

@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ser_admin_api.common.models import _id_value, _rows, _string_list, _string_value
-
-if TYPE_CHECKING:
-    from ser_admin_api.relay_users.requests import RelayUserAllowedAddress
 
 
 class RelayUserMetadata(dict[str, Any]):
@@ -40,15 +37,6 @@ class RelayUserAllowedAddressInfo(dict[str, Any]):
     def header_from(self) -> str:
         """Header From domain or address."""
         return _string_value(self, "headerFrom")
-
-    def to_request(self) -> RelayUserAllowedAddress:
-        """Return the request object used by relay-user create and update calls."""
-        from ser_admin_api.relay_users.requests import RelayUserAllowedAddress
-
-        return RelayUserAllowedAddress(
-            mail_from=self.mail_from,
-            header_from=self.header_from,
-        )
 
 
 class RelayUserLimitsInfo(dict[str, Any]):
@@ -121,10 +109,6 @@ class RelayUserDetail(RelayUserMetadata):
     def allowed_addresses(self) -> list[RelayUserAllowedAddressInfo]:
         """Allowed address pairs currently configured for the relay user."""
         return [RelayUserAllowedAddressInfo(row) for row in _rows(self.get("allowedAddress"))]
-
-    def allowed_addresses_for_update(self) -> list[RelayUserAllowedAddress]:
-        """Return allowed address request objects for read-modify-update flows."""
-        return [address.to_request() for address in self.allowed_addresses]
 
     @property
     def allowed_ips(self) -> list[str]:

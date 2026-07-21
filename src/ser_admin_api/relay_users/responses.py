@@ -5,7 +5,6 @@ from collections.abc import Mapping
 from ser_admin_api.common import SERResponseMap
 from ser_admin_api.common.models import _rows, _string_list
 from ser_admin_api.relay_users.models import (
-    RelayUserMetadata,
     RelayUserDetail,
     RelayUserCredential,
     ClusterInfo,

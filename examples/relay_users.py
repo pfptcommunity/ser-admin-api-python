@@ -92,12 +92,18 @@ def show_relay_user_request_shapes() -> None:
     print(f"status_request={status_request.to_list()}")
     print(f"credential_request={credential_request.to_mapping()}")
 
-    # A detail response can be converted back into update request objects for
-    # read-modify-update workflows:
+    # A read-modify-update flow can reuse response data by explicitly building
+    # the request-side model expected by update.
     #
     # relay_user = client.relay.relay_users["relay-user-id"].retrieve().data
     # update = RelayUserUpdate(
-    #     allowed_address=relay_user.allowed_addresses_for_update(),
+    #     allowed_address=[
+    #         RelayUserAllowedAddress(
+    #             mail_from=address.mail_from,
+    #             header_from=address.header_from,
+    #         )
+    #         for address in relay_user.allowed_addresses
+    #     ],
     # ).with_allowed_address("new.example.com", "new.example.com")
 
     # created = client.relay.relay_users.create(create_request)
