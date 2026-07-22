@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from common import create_client, load_settings, show_page, show_resource
+from common import create_client, load_settings
 from ser_admin_api import SERClient
 from ser_admin_api.reporting.failures import (
     FailureMessageTrendRequest,
@@ -14,10 +14,18 @@ from ser_admin_api.reporting.failures import (
 
 def show_failure_reports(client: SERClient, start: date, end: date) -> None:
     """Show top-level failure reporting resources."""
-    show_resource("Failures root resource", client.reporting.failures)
-    show_resource("Failure message trend resource", client.reporting.failures.message_trend)
-    show_resource("Failure relay users resource", client.reporting.failures.relay_users)
-    show_resource("Failure tags resource", client.reporting.failures.tags)
+    print("Failures root resource:")
+    print(f"  path: {client.reporting.failures.path}")
+    print(f"  url:  {client.reporting.failures.url}")
+    print("Failure message trend resource:")
+    print(f"  path: {client.reporting.failures.message_trend.path}")
+    print(f"  url:  {client.reporting.failures.message_trend.url}")
+    print("Failure relay users resource:")
+    print(f"  path: {client.reporting.failures.relay_users.path}")
+    print(f"  url:  {client.reporting.failures.relay_users.url}")
+    print("Failure tags resource:")
+    print(f"  path: {client.reporting.failures.tags.path}")
+    print(f"  url:  {client.reporting.failures.tags.url}")
 
     trend = client.reporting.failures.message_trend.retrieve(
         FailureMessageTrendRequest().with_dates(gte=start, lte=end).with_interval(ReportInterval.DAY)
@@ -27,14 +35,30 @@ def show_failure_reports(client: SERClient, start: date, end: date) -> None:
     relay_users = client.reporting.failures.relay_users.retrieve(
         FailureRelayUsersRequest().with_dates(gte=start, lte=end).with_page(1, 5)
     )
-    show_page(relay_users)
+    print(f"relay_users_status={relay_users.status}")
+    print(
+        "relay_users_page="
+        f"{relay_users.current_page_number} "
+        f"size={relay_users.page_size} "
+        f"total_items={relay_users.record_count}"
+    )
+    print(f"relay_users_links.self={relay_users.self_link}")
+    print(f"relay_users_links.next={relay_users.next_link}")
     for row in relay_users:
         print(f"failure_relay_user={row.relay_user_id} name={row.name} failed={row.total_failed_messages}")
 
     tags = client.reporting.failures.tags.retrieve(
         FailureTagsRequest().with_dates(gte=start, lte=end).with_page(1, 5)
     )
-    show_page(tags)
+    print(f"tags_status={tags.status}")
+    print(
+        "tags_page="
+        f"{tags.current_page_number} "
+        f"size={tags.page_size} "
+        f"total_items={tags.record_count}"
+    )
+    print(f"tags_links.self={tags.self_link}")
+    print(f"tags_links.next={tags.next_link}")
     for row in tags:
         print(f"failure_tag={row.tag_id} name={row.name} failed={row.total_failed_messages}")
 

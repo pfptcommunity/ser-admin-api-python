@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from common import create_client, display_value, load_settings, show_page, show_resource
+from common import create_client, load_settings
 from ser_admin_api import SERClient
 from ser_admin_api.common import SortDirection
 from ser_admin_api.tags import TagDetailsQuery, TagInfoQuery, TagNotesQuery, TagSortField
@@ -8,18 +8,34 @@ from ser_admin_api.tags import TagDetailsQuery, TagInfoQuery, TagNotesQuery, Tag
 
 def show_tag_resources(client: SERClient) -> None:
     """Show tag collection and child resources."""
-    show_resource("Tag management root resource", client.tag_management)
-    show_resource("Tags resource", client.tag_management.tags)
-    show_resource("Tag names resource", client.tag_management.tags.names)
-    show_resource("Tag download resource", client.tag_management.tags.download)
+    print("Tag management root resource:")
+    print(f"  path: {client.tag_management.path}")
+    print(f"  url:  {client.tag_management.url}")
+    print("Tags resource:")
+    print(f"  path: {client.tag_management.tags.path}")
+    print(f"  url:  {client.tag_management.tags.url}")
+    print("Tag names resource:")
+    print(f"  path: {client.tag_management.tags.names.path}")
+    print(f"  url:  {client.tag_management.tags.names.url}")
+    print("Tag download resource:")
+    print(f"  path: {client.tag_management.tags.download.path}")
+    print(f"  url:  {client.tag_management.tags.download.url}")
 
     names = client.tag_management.tags.names.retrieve()
     print(f"names_status={names.status}")
     for tag in names.data[:5]:
-        print(f"tag_name={display_value(tag)}")
+        print(f"tag={tag.tag_id} name={tag.name}")
 
     tags = client.tag_management.tags.retrieve(TagInfoQuery(page=1, size=5))
-    show_page(tags)
+    print(f"status={tags.status}")
+    print(
+        "page="
+        f"{tags.current_page_number} "
+        f"size={tags.page_size} "
+        f"total_items={tags.record_count}"
+    )
+    print(f"links.self={tags.self_link}")
+    print(f"links.next={tags.next_link}")
     for tag in tags:
         print(f"tag={tag.tag_id} name={tag.name}")
 
@@ -36,16 +52,33 @@ def show_tag_resources(client: SERClient) -> None:
 
     if tags:
         tag_id = tags[0].tag_id
-        show_resource("One tag resource", client.tag_management.tags[tag_id])
-        show_resource("One tag notes resource", client.tag_management.tags[tag_id].notes)
-        show_resource("One tag relay users resource", client.tag_management.tags[tag_id].relay_users)
-        show_resource("One tag resources resource", client.tag_management.tags[tag_id].resources)
+        tag_resource = client.tag_management.tags[tag_id]
+        print("One tag resource:")
+        print(f"  path: {tag_resource.path}")
+        print(f"  url:  {tag_resource.url}")
+        print("One tag notes resource:")
+        print(f"  path: {tag_resource.notes.path}")
+        print(f"  url:  {tag_resource.notes.url}")
+        print("One tag relay users resource:")
+        print(f"  path: {tag_resource.relay_users.path}")
+        print(f"  url:  {tag_resource.relay_users.url}")
+        print("One tag resources resource:")
+        print(f"  path: {tag_resource.resources.path}")
+        print(f"  url:  {tag_resource.resources.url}")
 
-        notes = client.tag_management.tags[tag_id].notes.retrieve(TagNotesQuery(page=1, size=5))
-        show_page(notes)
-        relay_users = client.tag_management.tags[tag_id].relay_users.retrieve()
+        notes = tag_resource.notes.retrieve(TagNotesQuery(page=1, size=5))
+        print(f"notes_status={notes.status}")
+        print(
+            "notes_page="
+            f"{notes.current_page_number} "
+            f"size={notes.page_size} "
+            f"total_items={notes.record_count}"
+        )
+        print(f"notes_links.self={notes.self_link}")
+        print(f"notes_links.next={notes.next_link}")
+        relay_users = tag_resource.relay_users.retrieve()
         print(f"tag_relay_users_status={relay_users.status}")
-        resources = client.tag_management.tags[tag_id].resources.retrieve()
+        resources = tag_resource.resources.retrieve()
         print(f"tag_resources_status={resources.status}")
 
 

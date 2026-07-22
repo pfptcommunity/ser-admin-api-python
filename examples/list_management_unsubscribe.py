@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from common import create_client, display_value, load_settings, show_page, show_resource
+from common import create_client, load_settings
 from ser_admin_api import SERClient
 from ser_admin_api.suppression import (
     UnsubscribeAddressesQuery,
@@ -15,30 +15,67 @@ from ser_admin_api.suppression import (
 def show_unsubscribe_lists(client: SERClient) -> None:
     """Show unsubscribe-list collection and child resources."""
     unsubscribe = client.list_management.lists.unsubscribe
-    show_resource("List management root resource", client.list_management)
-    show_resource("Unsubscribe lists resource", unsubscribe)
-    show_resource("Unsubscribe names resource", unsubscribe.names)
+    print("List management root resource:")
+    print(f"  path: {client.list_management.path}")
+    print(f"  url:  {client.list_management.url}")
+    print("Unsubscribe lists resource:")
+    print(f"  path: {unsubscribe.path}")
+    print(f"  url:  {unsubscribe.url}")
+    print("Unsubscribe names resource:")
+    print(f"  path: {unsubscribe.names.path}")
+    print(f"  url:  {unsubscribe.names.url}")
 
     names = unsubscribe.names.retrieve()
     print(f"names_status={names.status}")
     for list_name in names.data[:5]:
-        print(f"list_name={display_value(list_name)}")
+        print(f"list={list_name.list_id} name={list_name.name}")
 
     lists = unsubscribe.retrieve(UnsubscribeListQuery(page=1, size=5))
-    show_page(lists)
+    print(f"status={lists.status}")
+    print(
+        "page="
+        f"{lists.current_page_number} "
+        f"size={lists.page_size} "
+        f"total_items={lists.record_count}"
+    )
+    print(f"links.self={lists.self_link}")
+    print(f"links.next={lists.next_link}")
     for unsubscribe_list in lists:
         print(f"list={unsubscribe_list.list_id} name={unsubscribe_list.name}")
 
     if lists:
         list_id = lists[0].list_id
-        show_resource("One unsubscribe list resource", unsubscribe[list_id])
-        show_resource("Unsubscribe addresses resource", unsubscribe[list_id].addresses)
-        show_resource("Unsubscribe relay users resource", unsubscribe[list_id].relay_users)
+        list_resource = unsubscribe[list_id]
+        print("One unsubscribe list resource:")
+        print(f"  path: {list_resource.path}")
+        print(f"  url:  {list_resource.url}")
+        print("Unsubscribe addresses resource:")
+        print(f"  path: {list_resource.addresses.path}")
+        print(f"  url:  {list_resource.addresses.url}")
+        print("Unsubscribe relay users resource:")
+        print(f"  path: {list_resource.relay_users.path}")
+        print(f"  url:  {list_resource.relay_users.url}")
 
-        addresses = unsubscribe[list_id].addresses.retrieve(UnsubscribeAddressesQuery(page=1, size=5))
-        show_page(addresses)
-        relay_users = unsubscribe[list_id].relay_users.retrieve(UnsubscribeRelayUsersQuery(page=1, size=5))
-        show_page(relay_users)
+        addresses = list_resource.addresses.retrieve(UnsubscribeAddressesQuery(page=1, size=5))
+        print(f"addresses_status={addresses.status}")
+        print(
+            "addresses_page="
+            f"{addresses.current_page_number} "
+            f"size={addresses.page_size} "
+            f"total_items={addresses.record_count}"
+        )
+        print(f"addresses_links.self={addresses.self_link}")
+        print(f"addresses_links.next={addresses.next_link}")
+        relay_users = list_resource.relay_users.retrieve(UnsubscribeRelayUsersQuery(page=1, size=5))
+        print(f"relay_users_status={relay_users.status}")
+        print(
+            "relay_users_page="
+            f"{relay_users.current_page_number} "
+            f"size={relay_users.page_size} "
+            f"total_items={relay_users.record_count}"
+        )
+        print(f"relay_users_links.self={relay_users.self_link}")
+        print(f"relay_users_links.next={relay_users.next_link}")
 
 
 def show_unsubscribe_mutation_shapes() -> None:

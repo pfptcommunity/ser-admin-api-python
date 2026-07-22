@@ -1,15 +1,23 @@
 from __future__ import annotations
 
-from common import create_client, load_settings, show_resource
+from common import create_client, load_settings
 from ser_admin_api import SERClient
 
 
 def show_connector_discovery(client: SERClient) -> None:
     """Show connector discovery resources."""
-    show_resource("Connector config root resource", client.connector_config)
-    show_resource("Connector names resource", client.connector_config.connectors.names)
-    show_resource("Connector regions resource", client.connector_config.connectors.regions)
-    show_resource("Connector downloads resource", client.connector_config.connectors.downloads)
+    print("Connector config root resource:")
+    print(f"  path: {client.connector_config.path}")
+    print(f"  url:  {client.connector_config.url}")
+    print("Connector names resource:")
+    print(f"  path: {client.connector_config.connectors.names.path}")
+    print(f"  url:  {client.connector_config.connectors.names.url}")
+    print("Connector regions resource:")
+    print(f"  path: {client.connector_config.connectors.regions.path}")
+    print(f"  url:  {client.connector_config.connectors.regions.url}")
+    print("Connector downloads resource:")
+    print(f"  path: {client.connector_config.connectors.downloads.path}")
+    print(f"  url:  {client.connector_config.connectors.downloads.url}")
 
     names = client.connector_config.connectors.names.retrieve()
     print(f"names_status={names.status}")

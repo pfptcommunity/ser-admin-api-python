@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from common import create_client, load_settings, show_resource
+from common import create_client, load_settings
 from ser_admin_api import SERClient
 from ser_admin_api.reporting import DateRangeQuery, ReportRequest
 from ser_admin_api.reporting.failures import (
@@ -27,23 +27,58 @@ def show_scoped_report_shapes(client: SERClient, start: date, end: date) -> None
     print(f"date_range_query={query.to_mapping()}")
     print(f"report_request={request.to_mapping()}")
 
-    show_resource("Usage by relay user sending addresses", client.reporting.usage.relay_users["relay-user-id"].sending_addresses)
-    show_resource("Usage by relay user IPs", client.reporting.usage.relay_users["relay-user-id"].ips)
-    show_resource("Usage by tag relay users", client.reporting.usage.tags["tag-id"].relay_users)
-    show_resource("Usage by tag IPs", client.reporting.usage.tags["tag-id"].ips)
+    usage_relay_user = client.reporting.usage.relay_users["relay-user-id"]
+    usage_tag = client.reporting.usage.tags["tag-id"]
+    failure_relay_user = client.reporting.failures.relay_users["relay-user-id"]
+    failure_tag = client.reporting.failures.tags["tag-id"]
 
-    show_resource("Failures by relay user sending addresses", client.reporting.failures.relay_users["relay-user-id"].sending_addresses)
-    show_resource("Failures by relay user IPs", client.reporting.failures.relay_users["relay-user-id"].ips)
-    show_resource("Failures by relay user policy violations", client.reporting.failures.relay_users["relay-user-id"].policy_violations)
-    show_resource("Failures by relay user message filtering", client.reporting.failures.relay_users["relay-user-id"].message_filtering)
-    show_resource("Failures by relay user delivery recipients", client.reporting.failures.relay_users["relay-user-id"].delivery_failures.recipient)
-    show_resource("Failures by relay user delivery domains", client.reporting.failures.relay_users["relay-user-id"].delivery_failures.domain)
+    print("Usage by relay user sending addresses:")
+    print(f"  path: {usage_relay_user.sending_addresses.path}")
+    print(f"  url:  {usage_relay_user.sending_addresses.url}")
+    print("Usage by relay user IPs:")
+    print(f"  path: {usage_relay_user.ips.path}")
+    print(f"  url:  {usage_relay_user.ips.url}")
+    print("Usage by tag relay users:")
+    print(f"  path: {usage_tag.relay_users.path}")
+    print(f"  url:  {usage_tag.relay_users.url}")
+    print("Usage by tag IPs:")
+    print(f"  path: {usage_tag.ips.path}")
+    print(f"  url:  {usage_tag.ips.url}")
 
-    show_resource("Failures by tag relay users", client.reporting.failures.tags["tag-id"].relay_users)
-    show_resource("Failures by tag policy violations", client.reporting.failures.tags["tag-id"].policy_violations)
-    show_resource("Failures by tag message filtering", client.reporting.failures.tags["tag-id"].message_filtering)
-    show_resource("Failures by tag delivery recipients", client.reporting.failures.tags["tag-id"].delivery_failures.recipient)
-    show_resource("Failures by tag delivery domains", client.reporting.failures.tags["tag-id"].delivery_failures.domain)
+    print("Failures by relay user sending addresses:")
+    print(f"  path: {failure_relay_user.sending_addresses.path}")
+    print(f"  url:  {failure_relay_user.sending_addresses.url}")
+    print("Failures by relay user IPs:")
+    print(f"  path: {failure_relay_user.ips.path}")
+    print(f"  url:  {failure_relay_user.ips.url}")
+    print("Failures by relay user policy violations:")
+    print(f"  path: {failure_relay_user.policy_violations.path}")
+    print(f"  url:  {failure_relay_user.policy_violations.url}")
+    print("Failures by relay user message filtering:")
+    print(f"  path: {failure_relay_user.message_filtering.path}")
+    print(f"  url:  {failure_relay_user.message_filtering.url}")
+    print("Failures by relay user delivery recipients:")
+    print(f"  path: {failure_relay_user.delivery_failures.recipient.path}")
+    print(f"  url:  {failure_relay_user.delivery_failures.recipient.url}")
+    print("Failures by relay user delivery domains:")
+    print(f"  path: {failure_relay_user.delivery_failures.domain.path}")
+    print(f"  url:  {failure_relay_user.delivery_failures.domain.url}")
+
+    print("Failures by tag relay users:")
+    print(f"  path: {failure_tag.relay_users.path}")
+    print(f"  url:  {failure_tag.relay_users.url}")
+    print("Failures by tag policy violations:")
+    print(f"  path: {failure_tag.policy_violations.path}")
+    print(f"  url:  {failure_tag.policy_violations.url}")
+    print("Failures by tag message filtering:")
+    print(f"  path: {failure_tag.message_filtering.path}")
+    print(f"  url:  {failure_tag.message_filtering.url}")
+    print("Failures by tag delivery recipients:")
+    print(f"  path: {failure_tag.delivery_failures.recipient.path}")
+    print(f"  url:  {failure_tag.delivery_failures.recipient.url}")
+    print("Failures by tag delivery domains:")
+    print(f"  path: {failure_tag.delivery_failures.domain.path}")
+    print(f"  url:  {failure_tag.delivery_failures.domain.url}")
 
     # These calls need tenant-specific IDs. The request builders are shown here
     # so the shape is clear without touching tenant-specific records.

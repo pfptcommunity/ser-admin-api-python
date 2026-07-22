@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from common import create_client, load_settings, show_page, show_resource
+from common import create_client, load_settings
 from ser_admin_api import SERClient
 from ser_admin_api.relay_users import (
     RelayUserAllowedAddress,
@@ -20,9 +20,15 @@ from ser_admin_api.relay_users import (
 
 def show_relay_user_collections(client: SERClient) -> None:
     """Show relay-user collection, search, and names resources."""
-    show_resource("Relay users resource", client.relay.relay_users)
-    show_resource("Relay user names resource", client.relay.relay_users.names)
-    show_resource("Relay user search resource", client.relay.relay_users.search)
+    print("Relay users resource:")
+    print(f"  path: {client.relay.relay_users.path}")
+    print(f"  url:  {client.relay.relay_users.url}")
+    print("Relay user names resource:")
+    print(f"  path: {client.relay.relay_users.names.path}")
+    print(f"  url:  {client.relay.relay_users.names.url}")
+    print("Relay user search resource:")
+    print(f"  path: {client.relay.relay_users.search.path}")
+    print(f"  url:  {client.relay.relay_users.search.url}")
 
     names = client.relay.relay_users.names.retrieve(
         RelayUserNamesQuery().with_relay_user_type(RelayUserType.STANDARD)
@@ -32,7 +38,15 @@ def show_relay_user_collections(client: SERClient) -> None:
         print(f"name={relay_user.name}")
 
     first_page = client.relay.relay_users.retrieve(RelayUsersQuery(page=1, size=5))
-    show_page(first_page)
+    print(f"status={first_page.status}")
+    print(
+        "page="
+        f"{first_page.current_page_number} "
+        f"size={first_page.page_size} "
+        f"total_items={first_page.record_count}"
+    )
+    print(f"links.self={first_page.self_link}")
+    print(f"links.next={first_page.next_link}")
     for relay_user in first_page:
         print(f"user={relay_user.relay_user_id} name={relay_user.name} status={relay_user.status}")
 
@@ -43,7 +57,15 @@ def show_relay_user_collections(client: SERClient) -> None:
             print(f"allowed_address={address.mail_from} header_from={address.header_from}")
 
     search = client.relay.relay_users.search.retrieve(RelayUserSearch().with_size(5))
-    show_page(search)
+    print(f"search_status={search.status}")
+    print(
+        "search_page="
+        f"{search.current_page_number} "
+        f"size={search.page_size} "
+        f"total_items={search.record_count}"
+    )
+    print(f"search_links.self={search.self_link}")
+    print(f"search_links.next={search.next_link}")
 
 
 def show_relay_user_request_shapes() -> None:

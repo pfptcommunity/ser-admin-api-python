@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from common import create_client, load_settings, show_page, show_resource
+from common import create_client, load_settings
 from ser_admin_api import SERClient
 from ser_admin_api.reporting.failures import ReportInterval
 from ser_admin_api.reporting.usage import UsageMetricsRequest, UsageTrafficSummaryQuery, UsageTrendRequest
@@ -10,12 +10,24 @@ from ser_admin_api.reporting.usage import UsageMetricsRequest, UsageTrafficSumma
 
 def show_usage_reports(client: SERClient, start: date, end: date) -> None:
     """Show top-level usage reporting resources."""
-    show_resource("Usage root resource", client.reporting.usage)
-    show_resource("Usage traffic summary resource", client.reporting.usage.traffic_summary)
-    show_resource("Usage overview resource", client.reporting.usage.overview)
-    show_resource("Usage v2 overview resource", client.reporting_v2.usage.overview)
-    show_resource("Usage relay users resource", client.reporting.usage.relay_users)
-    show_resource("Usage tags resource", client.reporting.usage.tags)
+    print("Usage root resource:")
+    print(f"  path: {client.reporting.usage.path}")
+    print(f"  url:  {client.reporting.usage.url}")
+    print("Usage traffic summary resource:")
+    print(f"  path: {client.reporting.usage.traffic_summary.path}")
+    print(f"  url:  {client.reporting.usage.traffic_summary.url}")
+    print("Usage overview resource:")
+    print(f"  path: {client.reporting.usage.overview.path}")
+    print(f"  url:  {client.reporting.usage.overview.url}")
+    print("Usage v2 overview resource:")
+    print(f"  path: {client.reporting_v2.usage.overview.path}")
+    print(f"  url:  {client.reporting_v2.usage.overview.url}")
+    print("Usage relay users resource:")
+    print(f"  path: {client.reporting.usage.relay_users.path}")
+    print(f"  url:  {client.reporting.usage.relay_users.url}")
+    print("Usage tags resource:")
+    print(f"  path: {client.reporting.usage.tags.path}")
+    print(f"  url:  {client.reporting.usage.tags.url}")
 
     traffic = client.reporting.usage.traffic_summary.retrieve(
         UsageTrafficSummaryQuery().with_dates(gte=start, lte=end)
@@ -33,12 +45,28 @@ def show_usage_reports(client: SERClient, start: date, end: date) -> None:
 
     request = UsageMetricsRequest().with_dates(gte=start, lte=end).with_page(1, 5)
     relay_users = client.reporting.usage.relay_users.retrieve(request)
-    show_page(relay_users)
+    print(f"relay_users_status={relay_users.status}")
+    print(
+        "relay_users_page="
+        f"{relay_users.current_page_number} "
+        f"size={relay_users.page_size} "
+        f"total_items={relay_users.record_count}"
+    )
+    print(f"relay_users_links.self={relay_users.self_link}")
+    print(f"relay_users_links.next={relay_users.next_link}")
     for row in relay_users:
         print(f"relay_user={row.relay_user_id} name={row.name} total={row.total_messages}")
 
     tags = client.reporting.usage.tags.retrieve(request)
-    show_page(tags)
+    print(f"tags_status={tags.status}")
+    print(
+        "tags_page="
+        f"{tags.current_page_number} "
+        f"size={tags.page_size} "
+        f"total_items={tags.record_count}"
+    )
+    print(f"tags_links.self={tags.self_link}")
+    print(f"tags_links.next={tags.next_link}")
     for row in tags:
         print(f"tag={row.tag_id} name={row.name} total={row.total_messages}")
 
