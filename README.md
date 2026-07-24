@@ -77,6 +77,13 @@ The examples are intentionally resource-focused so each file demonstrates one sm
 runnable portions are read-only by default. Mutation examples are shown as request shapes or commented calls because
 connector and relay-user delete operations are not exposed by the documented API.
 
+### Maintainer Smoke Tests
+
+Release smoke tests live under `tools/live_smoke/`. They are separate from the user-facing examples and require live SER
+Admin API credentials.
+
+See `tools/live_smoke/README.md`.
+
 ### Resource Paths
 
 The API is modeled as a resource tree. Each resource exposes its path and URL, which can be useful when learning or
