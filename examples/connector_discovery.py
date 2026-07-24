@@ -37,6 +37,22 @@ def show_connector_discovery(client: SERClient) -> None:
             f"{download.download_id} os={download.os} "
             f"version={download.version} published={download.published_date}"
         )
+    if downloads.data:
+        download_resource = client.connector_config.connectors.downloads[downloads.data[0].download_id]
+        print("One connector download resource:")
+        print(f"  path: {download_resource.path}")
+        print(f"  url:  {download_resource.url}")
+    print("Connector install guide resource:")
+    print(f"  path: {client.connector_config.connectors.downloads.install_guide.path}")
+    print(f"  url:  {client.connector_config.connectors.downloads.install_guide.url}")
+
+    # These endpoints return file content. Uncomment when you intentionally want
+    # to retrieve or save the installer binary or install guide.
+    #
+    # installer = client.connector_config.connectors.downloads["download-id"].retrieve()
+    # saved_installer = client.connector_config.connectors.downloads["download-id"].download_to("./downloads")
+    # guide = client.connector_config.connectors.downloads.install_guide.retrieve()
+    # saved_guide = client.connector_config.connectors.downloads.install_guide.download_to("./downloads")
 
 
 def main() -> None:

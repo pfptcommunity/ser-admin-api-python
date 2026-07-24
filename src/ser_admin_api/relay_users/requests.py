@@ -14,7 +14,7 @@ from klarient import (
     RequestFields,
     list_of,
 )
-from typing import Self
+from typing import Any, Self
 
 from ser_admin_api.common import CredentialUpdate, GeneratedCredential
 from ser_admin_api.common.encoding import SERValueEncoder
@@ -466,6 +466,140 @@ class RelayUserRewriteRule(RequestFields):
     header_from_enabled = RequestField[bool](name="headerFromEnabled", value_type=bool)
     envelope_from_enabled = RequestField[bool](name="envelopeFromEnabled", value_type=bool)
     reply_to_enabled = RequestField[bool](name="replyToEnabled", value_type=bool)
+
+
+class AddressConfigPatch(JSONBodyRequest):
+    """Request body for patching relay user address configuration.
+
+    The endpoint appends or removes allowed address pairs and sender rewrite
+    rules without requiring the caller to send the full relay user object.
+    """
+
+    def __init__(
+            self,
+            *,
+            add_allowed_addresses: list[RelayUserAllowedAddress] | None = None,
+            add_rewrite_rules: list[RelayUserRewriteRule] | None = None,
+            remove_allowed_addresses: list[RelayUserAllowedAddress] | None = None,
+            remove_rewrite_rules: list[RelayUserRewriteRule] | None = None,
+    ) -> None:
+        super().__init__(encoder=SERValueEncoder())
+        self._set_optional_fields(
+            add_allowed_addresses=add_allowed_addresses,
+            add_rewrite_rules=add_rewrite_rules,
+            remove_allowed_addresses=remove_allowed_addresses,
+            remove_rewrite_rules=remove_rewrite_rules,
+        )
+
+    add_allowed_addresses = RequestField[list[RelayUserAllowedAddress]](
+        value_type=list,
+        validator=list_of(RelayUserAllowedAddress),
+    )
+    add_rewrite_rules = RequestField[list[RelayUserRewriteRule]](
+        value_type=list,
+        validator=list_of(RelayUserRewriteRule),
+    )
+    remove_allowed_addresses = RequestField[list[RelayUserAllowedAddress]](
+        value_type=list,
+        validator=list_of(RelayUserAllowedAddress),
+    )
+    remove_rewrite_rules = RequestField[list[RelayUserRewriteRule]](
+        value_type=list,
+        validator=list_of(RelayUserRewriteRule),
+    )
+
+    def add_allowed_address(self, mail_from: str, header_from: str) -> Self:
+        """Append one allowed address pair."""
+        self.add_allowed_addresses = [
+            *(self.add_allowed_addresses or []),
+            RelayUserAllowedAddress(mail_from=mail_from, header_from=header_from),
+        ]
+        return self
+
+    def add_allowed_address_pair(self, address: RelayUserAllowedAddress) -> Self:
+        """Append one prebuilt allowed address pair."""
+        self.add_allowed_addresses = [*(self.add_allowed_addresses or []), address]
+        return self
+
+    def add_rewrite_rule(
+            self,
+            rewrite_from: str,
+            rewrite_to: str,
+            *,
+            header_from_enabled: bool = True,
+            envelope_from_enabled: bool | None = None,
+            reply_to_enabled: bool | None = None,
+    ) -> Self:
+        """Append one sender rewrite rule."""
+        return self.add_rewrite_rule_object(
+            RelayUserRewriteRule(
+                rewrite_from=rewrite_from,
+                rewrite_to=rewrite_to,
+                header_from_enabled=header_from_enabled,
+                envelope_from_enabled=envelope_from_enabled,
+                reply_to_enabled=reply_to_enabled,
+            )
+        )
+
+    def add_rewrite_rule_object(self, rule: RelayUserRewriteRule) -> Self:
+        """Append one prebuilt sender rewrite rule."""
+        self.add_rewrite_rules = [*(self.add_rewrite_rules or []), rule]
+        return self
+
+    def remove_allowed_address(self, mail_from: str, header_from: str) -> Self:
+        """Remove one allowed address pair."""
+        self.remove_allowed_addresses = [
+            *(self.remove_allowed_addresses or []),
+            RelayUserAllowedAddress(mail_from=mail_from, header_from=header_from),
+        ]
+        return self
+
+    def remove_allowed_address_pair(self, address: RelayUserAllowedAddress) -> Self:
+        """Remove one prebuilt allowed address pair."""
+        self.remove_allowed_addresses = [*(self.remove_allowed_addresses or []), address]
+        return self
+
+    def remove_rewrite_rule(self, rewrite_from: str, rewrite_to: str) -> Self:
+        """Remove one sender rewrite rule by source and destination."""
+        return self.remove_rewrite_rule_object(
+            RelayUserRewriteRule(
+                rewrite_from=rewrite_from,
+                rewrite_to=rewrite_to,
+            )
+        )
+
+    def remove_rewrite_rule_object(self, rule: RelayUserRewriteRule) -> Self:
+        """Remove one prebuilt sender rewrite rule."""
+        self.remove_rewrite_rules = [*(self.remove_rewrite_rules or []), rule]
+        return self
+
+    def to_mapping(self) -> dict[str, Any]:
+        """Return the JSON body expected by the address-config patch endpoint."""
+        data: dict[str, Any] = {}
+        add = self.__section(self.add_allowed_addresses, self.add_rewrite_rules)
+        remove = self.__section(self.remove_allowed_addresses, self.remove_rewrite_rules)
+        if add:
+            data["add"] = add
+        if remove:
+            data["remove"] = remove
+        if not data:
+            raise ValueError("address config patch requires at least one add or remove item")
+        return data
+
+    def _to_request_options(self) -> HTTPRequestOptions:
+        return HTTPRequestOptions(body=JSONBody(self.to_mapping()))
+
+    def __section(
+            self,
+            allowed_addresses: list[RelayUserAllowedAddress] | None,
+            rewrite_rules: list[RelayUserRewriteRule] | None,
+    ) -> dict[str, Any]:
+        data: dict[str, Any] = {}
+        if allowed_addresses:
+            data["allowedAddress"] = self.encoder.encode_value(allowed_addresses)
+        if rewrite_rules:
+            data["rewriteRules"] = self.encoder.encode_value(rewrite_rules)
+        return data
 
 
 class RelayUserCreate(JSONBodyRequest):
@@ -940,6 +1074,20 @@ class RelayUserSearch(JSONBodyRequest):
         if direction is not None:
             self.direction = direction
         return self
+
+    def _to_page_state(self, default: PageNumberState) -> PageNumberState:
+        """Return the page state represented by this search body."""
+        return PageNumberState(
+            page_number=self.page if self.page is not None else default.page_number,
+            page_size=self.size if self.size is not None else default.page_size,
+        )
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this search body for one page request."""
+        data = self.to_mapping()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
 
     @staticmethod
     def _range(

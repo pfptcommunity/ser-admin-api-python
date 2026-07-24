@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
-from klarient import Page, PageNumberState, PageableResource, QueryRequest, RequestField
+from klarient import PagedResponse, PagedResponseModel, PageNumberState, QueryRequest, RequestField, SyncResource
 from klarient.http.client import _SyncClientImpl
 from typing import Any, Self
 
@@ -130,18 +130,12 @@ class FailureSendingAddressesQuery(QueryRequest):
             page_size=self.size if self.size is not None else default.page_size,
         )
 
-class SendingAddressesResource(PageableResource[_SyncClientImpl, FailureSendingAddress, PageNumberState]):
+class SendingAddressesResource(SyncResource[_SyncClientImpl]):
     """Failure sending addresses endpoint."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureSendingAddress,
-            pagination=SERTotalCountPagination(),
-            **kwargs,
-        )
-
-    def retrieve(self, options: FailureSendingAddressesQuery | None = None) -> Page[FailureSendingAddress]:
+    def retrieve(self, options: FailureSendingAddressesQuery | None = None) -> PagedResponse[FailureSendingAddress]:
         """Retrieve failure sending address report data."""
-        return self._retrieve_page(options=options)
+        return self._executor.get(
+            PagedResponseModel(FailureSendingAddress, SERTotalCountPagination()),
+            options,
+        )

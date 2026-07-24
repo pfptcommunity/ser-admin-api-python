@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from klarient import JSONBodyRequest, PageNumberState, QueryRequest, RequestField, RequestFields, list_of
+from klarient import (
+    HTTPRequestOptions,
+    JSONBody,
+    JSONBodyRequest,
+    PageNumberState,
+    QueryRequest,
+    RequestField,
+    RequestFields,
+    list_of,
+)
 from typing import Any, Self
 
 from ser_admin_api.common.encoding import SERValueEncoder
@@ -311,3 +320,10 @@ class SearchRequest(JSONBodyRequest):
             page_number=self.page if self.page is not None else default.page_number,
             page_size=self.size if self.size is not None else default.page_size,
         )
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this search body for one page request."""
+        data = self.to_mapping()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))

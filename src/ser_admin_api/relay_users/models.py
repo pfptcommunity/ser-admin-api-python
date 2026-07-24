@@ -167,6 +167,44 @@ class RelayUserDetail(RelayUserMetadata):
         return _string_value(self, "unsubscribeListId")
 
 
+class AddressConfig(dict[str, Any]):
+    """Address configuration returned by the address-config patch endpoint."""
+
+    @property
+    def allowed_addresses(self) -> list[RelayUserAllowedAddressInfo]:
+        """Allowed address pairs after the patch was applied."""
+        return [RelayUserAllowedAddressInfo(row) for row in _rows(self.get("allowedAddress"))]
+
+    @property
+    def rewrite_rules(self) -> list[RelayUserRewriteRuleInfo]:
+        """Sender rewrite rules after the patch was applied."""
+        return [RelayUserRewriteRuleInfo(row) for row in _rows(self.get("rewriteRules"))]
+
+    @property
+    def updated_by(self) -> str:
+        """User that last updated the address configuration."""
+        return _string_value(self, "updatedBy")
+
+    @property
+    def update_date(self) -> str:
+        """Date the address configuration was last updated."""
+        return _string_value(self, "updateDate")
+
+
+class AddressConfigFailures(dict[str, Any]):
+    """Address-config patch items rejected by the API."""
+
+    @property
+    def allowed_addresses(self) -> list[RelayUserAllowedAddressInfo]:
+        """Allowed address pairs that were not applied."""
+        return [RelayUserAllowedAddressInfo(row) for row in _rows(self.get("allowedAddress"))]
+
+    @property
+    def rewrite_rules(self) -> list[RelayUserRewriteRuleInfo]:
+        """Sender rewrite rules that were not applied."""
+        return [RelayUserRewriteRuleInfo(row) for row in _rows(self.get("rewriteRules"))]
+
+
 class RelayUserCredential(dict[str, Any]):
     """New relay user credential returned after rotation."""
 

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from klarient import HTTPMethod, Page, PageNumberState, PageableResource, ResourcePath, SyncResource
+from klarient import PagedResponse, PagedResponseModel, ResourcePath, SyncResource
 from klarient.http.client import _SyncClientImpl
-from typing import Any
 
 from ser_admin_api.common import SERPagination
 from ser_admin_api.relay_users.models import RelayUserMetadata
 from ser_admin_api.relay_users.requests import (
+    AddressConfigPatch,
     RelayUserCreate,
     RelayUserCredentialsUpdate,
     RelayUserNamesQuery,
@@ -19,6 +19,7 @@ from ser_admin_api.relay_users.requests import (
     _RelayUserNoteCreate,
 )
 from ser_admin_api.relay_users.responses import (
+    AddressConfigResponse,
     ClustersResponse,
     PreferredUsernameResponse,
     RelayTagResponse,
@@ -40,21 +41,15 @@ class ClustersResource(SyncResource[_SyncClientImpl]):
         return self._executor.get(ClustersResponse)
 
 
-class VerifiedDomainsResource(PageableResource[_SyncClientImpl, str, PageNumberState]):
+class VerifiedDomainsResource(SyncResource[_SyncClientImpl]):
     """Verified domains endpoint."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=str,
-            pagination=SERPagination(),
-            **kwargs,
+    def retrieve(self, options: VerifiedDomainsQuery | None = None) -> PagedResponse[str]:
+        """Retrieve verified domain names."""
+        return self._executor.get(
+            PagedResponseModel(str, SERPagination()),
+            options,
         )
-
-    def retrieve(self, options: VerifiedDomainsQuery | None = None) -> Page[str]:
-        """Retrieve one page of verified domain names."""
-        return self._retrieve_page(options=options)
 
 
 class PreferredUsernameItemResource(SyncResource[_SyncClientImpl]):
@@ -92,6 +87,23 @@ class RelayUserCredentialsResource(SyncResource[_SyncClientImpl]):
         return self._executor.put(RelayUserCredentialResponse, options)
 
 
+class AddressConfigResource(SyncResource[_SyncClientImpl]):
+    """Address-config endpoint for one relay user."""
+
+    def patch(
+            self,
+            options: AddressConfigPatch,
+            *,
+            raise_on_error: bool | None = None,
+    ) -> AddressConfigResponse:
+        """Append or remove allowed addresses and sender rewrite rules."""
+        return self._executor.patch(
+            AddressConfigResponse,
+            options,
+            raise_on_error=raise_on_error,
+        )
+
+
 class RelayUserResource(SyncResource[_SyncClientImpl]):
     """Resource for one relay user."""
 
@@ -105,6 +117,11 @@ class RelayUserResource(SyncResource[_SyncClientImpl]):
         """Credentials resource below this relay user."""
         return RelayUserCredentialsResource(self, segment="credentials")
 
+    @property
+    def address_config(self) -> AddressConfigResource:
+        """Address-config resource below this relay user."""
+        return AddressConfigResource(self, segment="address-config")
+
     def retrieve(self) -> RelayUserResponse:
         """Retrieve this relay user."""
         return self._executor.get(RelayUserResponse)
@@ -114,21 +131,15 @@ class RelayUserResource(SyncResource[_SyncClientImpl]):
         return self._executor.put(RelayUserResponse, options)
 
 
-class RelayUsersSearchResource(PageableResource[_SyncClientImpl, RelayUserMetadata, PageNumberState]):
+class RelayUsersSearchResource(SyncResource[_SyncClientImpl]):
     """Search endpoint for relay users."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=RelayUserMetadata,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(self, options: RelayUserSearch | None = None) -> Page[RelayUserMetadata]:
+    def retrieve(self, options: RelayUserSearch | None = None) -> PagedResponse[RelayUserMetadata]:
         """Search relay users with an optional request body."""
-        return self._retrieve_page(HTTPMethod.POST, options)
+        return self._executor.post(
+            PagedResponseModel(RelayUserMetadata, SERPagination()),
+            options,
+        )
 
 
 class RelayUserNamesResource(SyncResource[_SyncClientImpl]):
@@ -139,17 +150,8 @@ class RelayUserNamesResource(SyncResource[_SyncClientImpl]):
         return self._executor.get(RelayUserNamesResponse, options)
 
 
-class RelayUsersResource(PageableResource[_SyncClientImpl, RelayUserMetadata, PageNumberState]):
+class RelayUsersResource(SyncResource[_SyncClientImpl]):
     """Paged relay user collection resource."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=RelayUserMetadata,
-            pagination=SERPagination(),
-            **kwargs,
-        )
 
     def __getitem__(self, relay_user_id: int | str) -> RelayUserResource:
         return RelayUserResource(self, segment=ResourcePath.segment(relay_user_id))
@@ -164,9 +166,12 @@ class RelayUsersResource(PageableResource[_SyncClientImpl, RelayUserMetadata, Pa
         """Names resource below relay users."""
         return RelayUserNamesResource(self, segment="names")
 
-    def retrieve(self, options: RelayUsersQuery | None = None) -> Page[RelayUserMetadata]:
-        """Retrieve one page of relay users with optional filters."""
-        return self._retrieve_page(options=options)
+    def retrieve(self, options: RelayUsersQuery | None = None) -> PagedResponse[RelayUserMetadata]:
+        """Retrieve relay users with optional filters."""
+        return self._executor.get(
+            PagedResponseModel(RelayUserMetadata, SERPagination()),
+            options,
+        )
 
     def create(self, options: RelayUserCreate) -> RelayUserResponse:
         """Create a relay user."""

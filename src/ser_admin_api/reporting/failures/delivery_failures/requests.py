@@ -35,7 +35,7 @@ class RecipientRequest(JSONBodyRequest):
             date: Date | DateTime | str | None = None,
             start_date: Date | DateTime | str | None = None,
             end_date: Date | DateTime | str | None = None,
-            dsn_codes: str | list[str] | None = None,
+            dsn_code: str | list[str] | None = None,
             order_by: RecipientSortField | None = None,
             order_dir: SortDirection | str | None = None,
             page: int | None = None,
@@ -47,7 +47,7 @@ class RecipientRequest(JSONBodyRequest):
             date=date,
             start_date=range_start,
             end_date=range_end,
-            dsn_codes=dsn_codes,
+            dsn_code=dsn_code,
             order_by=order_by,
             order_dir=order_dir,
             page=page,
@@ -57,8 +57,8 @@ class RecipientRequest(JSONBodyRequest):
     date = RequestField[Date | DateTime | str](name="dates", value_type=(Date, DateTime, str))
     start_date = RequestField[Date | DateTime | str](name="dates[gte]", value_type=(Date, DateTime, str))
     end_date = RequestField[Date | DateTime | str](name="dates[lte]", value_type=(Date, DateTime, str))
-    dsn_codes = RequestField[str | list[str]](
-        name="dsnCodes",
+    dsn_code = RequestField[str | list[str]](
+        name="dsnCode",
         value_type=(str, list),
         validator=lambda value: list_of(str)(value) if isinstance(value, list) else None,
     )
@@ -82,13 +82,13 @@ class RecipientRequest(JSONBodyRequest):
         return self
 
     def with_dsn_code(self, dsn_code: str) -> Self:
-        """Set the documented dsnCodes filter to one value."""
-        self.dsn_codes = dsn_code
+        """Set the documented dsnCode filter to one value."""
+        self.dsn_code = dsn_code
         return self
 
     def with_dsn_codes(self, dsn_codes: list[str]) -> Self:
-        """Set the documented dsnCodes filter to multiple values."""
-        self.dsn_codes = dsn_codes
+        """Set the documented dsnCode filter to multiple values."""
+        self.dsn_code = dsn_codes
         return self
 
     def with_page(self, page: int, size: int | None = None) -> Self:
@@ -99,9 +99,20 @@ class RecipientRequest(JSONBodyRequest):
         return self
 
     def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this report body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, object]:
         data = self.to_mapping(
             fields=(
-                "dsn_codes",
+                "dsn_code",
                 "order_by",
                 "order_dir",
                 "page",
@@ -111,7 +122,7 @@ class RecipientRequest(JSONBodyRequest):
         date_filter = self._date_filter()
         if date_filter is not None:
             data["dates"] = date_filter
-        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+        return data
 
     def _date_filter(self) -> object:
         return _encoded_date_filter(self, self.encoder)
@@ -133,7 +144,7 @@ class TagRecipientRequest(JSONBodyRequest):
             date: Date | DateTime | str | None = None,
             start_date: Date | DateTime | str | None = None,
             end_date: Date | DateTime | str | None = None,
-            dsn_code: str | None = None,
+            dsn_code: str | list[str] | None = None,
             order_by: RecipientSortField | None = None,
             order_dir: SortDirection | str | None = None,
             page: int | None = None,
@@ -155,7 +166,11 @@ class TagRecipientRequest(JSONBodyRequest):
     date = RequestField[Date | DateTime | str](name="dates", value_type=(Date, DateTime, str))
     start_date = RequestField[Date | DateTime | str](name="dates[gte]", value_type=(Date, DateTime, str))
     end_date = RequestField[Date | DateTime | str](name="dates[lte]", value_type=(Date, DateTime, str))
-    dsn_code = RequestField[str](name="dsnCode", value_type=str)
+    dsn_code = RequestField[str | list[str]](
+        name="dsnCode",
+        value_type=(str, list),
+        validator=lambda value: list_of(str)(value) if isinstance(value, list) else None,
+    )
     order_by = RequestField[RecipientSortField](
         name="orderBy",
         value_type=RecipientSortField,
@@ -180,6 +195,11 @@ class TagRecipientRequest(JSONBodyRequest):
         self.dsn_code = dsn_code
         return self
 
+    def with_dsn_codes(self, dsn_codes: list[str]) -> Self:
+        """Set the documented dsnCode filter to multiple values."""
+        self.dsn_code = dsn_codes
+        return self
+
     def with_page(self, page: int, size: int | None = None) -> Self:
         """Set the page number and optionally the page size."""
         self.page = page
@@ -188,6 +208,17 @@ class TagRecipientRequest(JSONBodyRequest):
         return self
 
     def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this report body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, object]:
         data = self.to_mapping(
             fields=(
                 "dsn_code",
@@ -200,7 +231,7 @@ class TagRecipientRequest(JSONBodyRequest):
         date_filter = self._date_filter()
         if date_filter is not None:
             data["dates"] = date_filter
-        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+        return data
 
     def _date_filter(self) -> object:
         return _encoded_date_filter(self, self.encoder)
@@ -301,6 +332,17 @@ class DomainRequest(JSONBodyRequest):
         return self
 
     def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this report body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, object]:
         data = self.to_mapping(
             fields=(
                 "dsn_code",
@@ -314,7 +356,7 @@ class DomainRequest(JSONBodyRequest):
         date_filter = self._date_filter()
         if date_filter is not None:
             data["dates"] = date_filter
-        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+        return data
 
     def _date_filter(self) -> object:
         return _encoded_date_filter(self, self.encoder)

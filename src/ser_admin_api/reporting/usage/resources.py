@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from klarient import HTTPMethod, Page, PageNumberState, PageableResource, ResourcePath, SyncResource
+from klarient import PagedResponse, PagedResponseModel, ResourcePath, SyncResource
 from klarient.http.client import _SyncClientImpl
 
 from ser_admin_api.common import SERPagination
@@ -85,60 +85,40 @@ class DataTrendResource(SyncResource[_SyncClientImpl]):
         return self._executor.post(UsageDataTrendResponse, options)
 
 
-class SendingAddressesResource(
-    PageableResource[_SyncClientImpl, UsageSendingAddress, PageNumberState],
-):
+class SendingAddressesResource(SyncResource[_SyncClientImpl]):
     """Usage by sending address endpoint."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=UsageSendingAddress,
-            pagination=SERPagination(),
-            **kwargs,
-        )
 
     def retrieve(
             self,
             options: UsageSendingAddressQuery | None = None,
-    ) -> Page[UsageSendingAddress]:
+    ) -> PagedResponse[UsageSendingAddress]:
         """Retrieve usage grouped by sending address."""
-        return self._retrieve_page(options=options)
+        return self._executor.get(
+            PagedResponseModel(UsageSendingAddress, SERPagination()),
+            options,
+        )
 
 
-class RelayUserIpsResource(PageableResource[_SyncClientImpl, UsageIP, PageNumberState]):
+class RelayUserIpsResource(SyncResource[_SyncClientImpl]):
     """Usage by IP address endpoint below one relay user."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=UsageIP,
-            pagination=SERPagination(),
-            **kwargs,
+    def retrieve(self, options: UsageRelayUserIPQuery | None = None) -> PagedResponse[UsageIP]:
+        """Retrieve relay-user usage grouped by IP address."""
+        return self._executor.get(
+            PagedResponseModel(UsageIP, SERPagination()),
+            options,
         )
 
-    def retrieve(self, options: UsageRelayUserIPQuery | None = None) -> Page[UsageIP]:
-        """Retrieve relay-user usage grouped by IP address."""
-        return self._retrieve_page(options=options)
 
-
-class TagIpsResource(PageableResource[_SyncClientImpl, UsageIP, PageNumberState]):
+class TagIpsResource(SyncResource[_SyncClientImpl]):
     """Usage by IP address endpoint below one tag."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=UsageIP,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(self, options: UsageTagIPQuery | None = None) -> Page[UsageIP]:
+    def retrieve(self, options: UsageTagIPQuery | None = None) -> PagedResponse[UsageIP]:
         """Retrieve tag usage grouped by IP address."""
-        return self._retrieve_page(options=options)
+        return self._executor.get(
+            PagedResponseModel(UsageIP, SERPagination()),
+            options,
+        )
 
 
 class UsageRelayUserResource(SyncResource[_SyncClientImpl]):
@@ -174,19 +154,11 @@ class UsageRelayUsersDownloadResource(SyncResource[_SyncClientImpl]):
         return self._executor.post(UsageRelayUsersDownloadResponse, options)
 
 
-class UsageRelayUsersResource(
-    PageableResource[_SyncClientImpl, UsageRelayUser, PageNumberState],
-):
+class UsageRelayUsersResource(SyncResource[_SyncClientImpl]):
     """Usage relay users report endpoint."""
 
     def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=UsageRelayUser,
-            pagination=SERPagination(),
-            **kwargs,
-        )
+        super().__init__(owner, segment=segment, **kwargs)
         self.__download = UsageRelayUsersDownloadResource(self, segment="download")
 
     def __getitem__(self, relay_user_id: int | str) -> UsageRelayUserResource:
@@ -200,31 +172,26 @@ class UsageRelayUsersResource(
     def retrieve(
             self,
             options: UsageMetricsRequest | None = None,
-    ) -> Page[UsageRelayUser]:
+    ) -> PagedResponse[UsageRelayUser]:
         """Retrieve relay user usage report data."""
-        return self._retrieve_page(HTTPMethod.POST, options=options)
-
-
-class UsageTagRelayUsersResource(
-    PageableResource[_SyncClientImpl, UsageRelayUser, PageNumberState],
-):
-    """Relay user usage endpoint below one tag."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=UsageRelayUser,
-            pagination=SERPagination(),
-            **kwargs,
+        return self._executor.post(
+            PagedResponseModel(UsageRelayUser, SERPagination()),
+            options,
         )
+
+
+class UsageTagRelayUsersResource(SyncResource[_SyncClientImpl]):
+    """Relay user usage endpoint below one tag."""
 
     def retrieve(
             self,
             options: UsageTagRelayUserQuery | None = None,
-    ) -> Page[UsageRelayUser]:
+    ) -> PagedResponse[UsageRelayUser]:
         """Retrieve relay user usage for the tag."""
-        return self._retrieve_page(options=options)
+        return self._executor.get(
+            PagedResponseModel(UsageRelayUser, SERPagination()),
+            options,
+        )
 
 
 class UsageTagResource(SyncResource[_SyncClientImpl]):
@@ -257,17 +224,11 @@ class UsageTagsDownloadResource(SyncResource[_SyncClientImpl]):
         return self._executor.post(UsageTagsDownloadResponse, options)
 
 
-class UsageTagsResource(PageableResource[_SyncClientImpl, UsageTag, PageNumberState]):
+class UsageTagsResource(SyncResource[_SyncClientImpl]):
     """Usage tags report endpoint."""
 
     def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=UsageTag,
-            pagination=SERPagination(),
-            **kwargs,
-        )
+        super().__init__(owner, segment=segment, **kwargs)
         self.__download = UsageTagsDownloadResource(self, segment="download")
 
     def __getitem__(self, tag_id: int | str) -> UsageTagResource:
@@ -281,9 +242,12 @@ class UsageTagsResource(PageableResource[_SyncClientImpl, UsageTag, PageNumberSt
     def retrieve(
             self,
             options: UsageMetricsRequest | None = None,
-    ) -> Page[UsageTag]:
+    ) -> PagedResponse[UsageTag]:
         """Retrieve tag usage report data."""
-        return self._retrieve_page(HTTPMethod.POST, options=options)
+        return self._executor.post(
+            PagedResponseModel(UsageTag, SERPagination()),
+            options,
+        )
 
 
 class UsageResource(SyncResource[_SyncClientImpl]):

@@ -3,13 +3,12 @@ from __future__ import annotations
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
 from klarient import (
-    HTTPMethod,
     HTTPRequestOptions,
     JSONBody,
     JSONBodyRequest,
-    Page,
+    PagedResponse,
+    PagedResponseModel,
     PageNumberState,
-    PageableResource,
     RequestField,
     ResourcePath,
     SyncResource,
@@ -226,6 +225,17 @@ class FailureTagsRequest(JSONBodyRequest):
         return self
 
     def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this report body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, Any]:
         data = self.to_mapping(
             fields=(
                 "total_failed_messages",
@@ -253,7 +263,7 @@ class FailureTagsRequest(JSONBodyRequest):
         date_filter = self._date_filter()
         if date_filter is not None:
             data["dates"] = date_filter
-        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+        return data
 
     def _date_filter(self) -> object:
         return _encoded_date_filter(self, self.encoder)
@@ -288,21 +298,15 @@ class FailureTagResource(SyncResource[_SyncClientImpl]):
         """Message filtering resource below this tag."""
         return MessageFilteringResource(self, segment="message-filtering")
 
-class FailureTagsResource(PageableResource[_SyncClientImpl, FailureTag, PageNumberState]):
+class FailureTagsResource(SyncResource[_SyncClientImpl]):
     """Failure tags report endpoint."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureTag,
-            pagination=SERPagination(),
-            **kwargs,
-        )
 
     def __getitem__(self, tag_id: int | str) -> FailureTagResource:
         return FailureTagResource(self, segment=ResourcePath.segment(tag_id))
 
-    def retrieve(self, options: FailureTagsRequest | None = None) -> Page[FailureTag]:
+    def retrieve(self, options: FailureTagsRequest | None = None) -> PagedResponse[FailureTag]:
         """Retrieve tag failure report data."""
-        return self._retrieve_page(HTTPMethod.POST, options)
+        return self._executor.post(
+            PagedResponseModel(FailureTag, SERPagination()),
+            options,
+        )

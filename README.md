@@ -73,9 +73,9 @@ Copy `examples/settings.example.json` to `settings.json` at the project root and
 them locally. The examples also accept `examples/settings.json` if you prefer to keep local example settings beside the
 example files.
 
-The examples are intentionally resource-focused so each file demonstrates one small part of the SER API tree. They are
-read-only by default. Mutation examples are shown as request shapes or commented calls because connector and relay-user
-delete operations are not exposed by the documented API.
+The examples are intentionally resource-focused so each file demonstrates one small part of the SER API tree. The
+runnable portions are read-only by default. Mutation examples are shown as request shapes or commented calls because
+connector and relay-user delete operations are not exposed by the documented API.
 
 ### Resource Paths
 
@@ -122,12 +122,13 @@ if __name__ == '__main__':
     client = SERClient("<enter_your_principal_here>", "<enter_your_secret_here>")
 
     relay_users = client.relay.relay_users.retrieve(RelayUsersQuery(page=1, size=100))
+    page = relay_users.page
 
-    print("Status: {}".format(relay_users.status))
-    print("Reason: {}".format(relay_users.reason))
-    print("Total Records: {}".format(relay_users.record_count))
+    print("Status: {}".format(page.status))
+    print("Reason: {}".format(page.reason))
+    print("Total Records: {}".format(page.record_count))
 
-    for relay_user in relay_users:
+    for relay_user in page.data:
         print(relay_user.relay_user_id)
         print(relay_user.name)
         print(relay_user.status)
@@ -144,7 +145,7 @@ if __name__ == '__main__':
 
     connectors = client.connector_config.connectors.retrieve(ConnectorInfoQuery(page=1, size=100))
 
-    for connector in connectors:
+    for connector in connectors.data:
         print(connector.connector_id)
         print(connector.name)
         print(connector.status)
@@ -161,7 +162,7 @@ if __name__ == '__main__':
 
     tags = client.tag_management.tags.retrieve(TagInfoQuery(page=1, size=100))
 
-    for tag in tags:
+    for tag in tags.data:
         print(tag.tag_id)
         print(tag.name)
 ```
@@ -179,7 +180,7 @@ if __name__ == '__main__':
         UnsubscribeListQuery(page=1, size=100)
     )
 
-    for unsubscribe_list in lists:
+    for unsubscribe_list in lists.data:
         print(unsubscribe_list.list_id)
         print(unsubscribe_list.name)
 ```
@@ -207,7 +208,7 @@ if __name__ == '__main__':
     relay_usage = client.reporting.usage.relay_users.retrieve(
         UsageMetricsRequest().with_dates(gte=start, lte=end).with_page(1, 100)
     )
-    for row in relay_usage:
+    for row in relay_usage.data:
         print(row.relay_user_id)
         print(row.total_messages)
 
@@ -219,8 +220,12 @@ if __name__ == '__main__':
 
 ### Pagination
 
-List-style resources are pageable. Calling `retrieve()` returns a `Page` object. Iterating a pageable resource yields
-page objects. Calling `items()` flattens page boundaries and yields typed rows.
+List-style resources return `PagedResponse[T]`. The first page is available immediately through `result.page`, and
+`result.data` is a shortcut for `result.page.data`. Iterating the result yields page objects, starting with the first
+page and then fetching continuation pages as needed. Calling `items()` flattens page boundaries and yields typed rows.
+
+This works for both GET-backed and POST-backed paged SER endpoints. The wrapper keeps the original request method and
+request body/query object with the paged result, so continuation pages use the same endpoint shape as the first call.
 
 ```python
 from ser_admin_api import SERClient
@@ -228,7 +233,12 @@ from ser_admin_api import SERClient
 if __name__ == '__main__':
     client = SERClient("<enter_your_principal_here>", "<enter_your_secret_here>")
 
-    for page in client.relay.relay_users:
+    result = client.relay.relay_users.retrieve()
+    print("First Page Number: {}".format(result.page.current_page_number))
+    for relay_user in result.data:
+        print(relay_user.name)
+
+    for page in result:
         print("Current Page Number: {}".format(page.current_page_number))
         print("Page Size: {}".format(page.page_size))
         print("Total Records: {}".format(page.record_count))
@@ -236,30 +246,30 @@ if __name__ == '__main__':
             print(relay_user.name)
         break
 
-    for relay_user in client.relay.relay_users.items():
+    for relay_user in client.relay.relay_users.retrieve().items():
         print(relay_user.name)
 ```
 
-Common pageable resources include:
+Common paged resource actions include:
 
 ```text
-client.relay.verified_domains
-client.relay.relay_users
-client.relay.relay_users.search
-client.connector_config.connectors
-client.connector_config.connectors.search
-client.connector_config.connectors.details
-client.connector_config.connectors.details.search
-client.tag_management.tags
-client.tag_management.tags["tag-id"].notes
-client.list_management.lists.unsubscribe
-client.list_management.lists.unsubscribe["list-id"].addresses
-client.list_management.lists.unsubscribe["list-id"].relay_users
-client.list_management.lists.unsubscribe.requests
-client.reporting.usage.relay_users
-client.reporting.usage.tags
-client.reporting.failures.relay_users
-client.reporting.failures.tags
+client.relay.verified_domains.retrieve()
+client.relay.relay_users.retrieve()
+client.relay.relay_users.search.retrieve(...)
+client.connector_config.connectors.retrieve()
+client.connector_config.connectors.search.retrieve(...)
+client.connector_config.connectors.details.retrieve()
+client.connector_config.connectors.details.search.retrieve(...)
+client.tag_management.tags.retrieve()
+client.tag_management.tags["tag-id"].notes.retrieve()
+client.list_management.lists.unsubscribe.retrieve()
+client.list_management.lists.unsubscribe["list-id"].addresses.retrieve(...)
+client.list_management.lists.unsubscribe["list-id"].relay_users.retrieve(...)
+client.list_management.lists.unsubscribe.requests.retrieve(...)
+client.reporting.usage.relay_users.retrieve(...)
+client.reporting.usage.tags.retrieve(...)
+client.reporting.failures.relay_users.retrieve(...)
+client.reporting.failures.tags.retrieve(...)
 ```
 
 ### Creating Or Updating Resources
@@ -310,6 +320,24 @@ create_request = (
 )
 
 print(create_request.to_mapping())
+```
+
+Relay-user address configuration can also be patched incrementally. This is useful when you want to add or remove
+allowed address pairs or sender rewrite rules without sending a full relay-user update.
+
+```python
+from ser_admin_api.relay_users import AddressConfigPatch
+
+patch_request = (
+    AddressConfigPatch()
+    .add_allowed_address("new.example.com", "new.example.com")
+    .remove_allowed_address("old.example.com", "old.example.com")
+)
+
+result = client.relay.relay_users["relay-user-id"].address_config.patch(patch_request)
+
+print(result.data.allowed_addresses)
+print(result.add_failed.allowed_addresses)
 ```
 
 Connector and relay-user create/update/status calls modify tenant configuration. The examples show the request shapes

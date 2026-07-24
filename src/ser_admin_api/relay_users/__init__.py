@@ -1,4 +1,6 @@
 from ser_admin_api.relay_users.models import (
+    AddressConfig,
+    AddressConfigFailures,
     ClusterInfo,
     PreferredUsername,
     RelayTag,
@@ -12,6 +14,7 @@ from ser_admin_api.relay_users.models import (
     RelayUserRewriteRuleInfo,
 )
 from ser_admin_api.relay_users.requests import (
+    AddressConfigPatch,
     RelayUserAllowedAddress,
     RelayUserFilterStatus,
     RelayUserCreate,
@@ -31,8 +34,10 @@ from ser_admin_api.relay_users.requests import (
     RelayUserVersion,
     VerifiedDomainsQuery,
 )
-from ser_admin_api.relay_users.resources import RelayConfigResource, RelayUsersResource
+from ser_admin_api.relay_users.resources import AddressConfigResource, RelayConfigResource, RelayUsersResource
 from ser_admin_api.relay_users.responses import (
+    AddressConfigMetadata,
+    AddressConfigResponse,
     ClustersResponse,
     PreferredUsernameResponse,
     RelayTagResponse,
@@ -46,6 +51,12 @@ from ser_admin_api.relay_users.responses import (
 )
 
 __all__ = [
+    "AddressConfig",
+    "AddressConfigFailures",
+    "AddressConfigMetadata",
+    "AddressConfigPatch",
+    "AddressConfigResource",
+    "AddressConfigResponse",
     "ClusterInfo",
     "ClustersResponse",
     "PreferredUsername",

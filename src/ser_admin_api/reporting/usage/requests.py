@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
-from typing import Generic, Self, TypeVar
+from typing import Any, Generic, Self, TypeVar
 
 from klarient import (
     HTTPRequestOptions,
@@ -65,7 +65,7 @@ class UsageRelayUserIPSortField(StrEnum):
     IP_ADDRESS = "ip_address"
     QUARANTINED_MESSAGES = "quarantined_messages"
     REJECTED_MESSAGES = "rejected_messages"
-    REQUESTED_THROUGHPUT = "requestedThroughput"
+    REQUESTED_THROUGHPUT = "requested_throughput"
     SENT_MESSAGES = "sent_messages"
     TOTAL_MESSAGES = "total_messages"
     UNDELIVERED_MESSAGES = "undelivered_messages"
@@ -104,6 +104,9 @@ class UsageTagIPSortField(StrEnum):
     SENT_MESSAGES = "sent_messages"
     TOTAL_MESSAGES = "total_messages"
     UNDELIVERED_MESSAGES = "undelivered_messages"
+
+
+UsageMetricValue = int | str
 
 
 class UsageTrafficSummaryQuery(QueryRequest):
@@ -301,12 +304,12 @@ class UsageMetricsRequest(JSONBodyRequest):
     accepted_messages = RequestField[int](name="acceptedMessages", value_type=int)
     accepted_messages_gte = RequestField[int](name="acceptedMessages[gte]", value_type=int)
     accepted_messages_lte = RequestField[int](name="acceptedMessages[lte]", value_type=int)
-    accepted_throughput = RequestField[str](name="acceptedThroughput", value_type=str)
-    accepted_throughput_gte = RequestField[str](name="acceptedThroughput[gte]", value_type=str)
-    accepted_throughput_lte = RequestField[str](name="acceptedThroughput[lte]", value_type=str)
-    avg_accepted_message_size = RequestField[str](name="avgAcceptedMessageSize", value_type=str)
-    avg_accepted_message_size_gte = RequestField[str](name="avgAcceptedMessageSize[gte]", value_type=str)
-    avg_accepted_message_size_lte = RequestField[str](name="avgAcceptedMessageSize[lte]", value_type=str)
+    accepted_throughput = RequestField[UsageMetricValue](name="acceptedThroughput", value_type=(int, str))
+    accepted_throughput_gte = RequestField[UsageMetricValue](name="acceptedThroughput[gte]", value_type=(int, str))
+    accepted_throughput_lte = RequestField[UsageMetricValue](name="acceptedThroughput[lte]", value_type=(int, str))
+    avg_accepted_message_size = RequestField[UsageMetricValue](name="avgAcceptedMessageSize", value_type=(int, str))
+    avg_accepted_message_size_gte = RequestField[UsageMetricValue](name="avgAcceptedMessageSize[gte]", value_type=(int, str))
+    avg_accepted_message_size_lte = RequestField[UsageMetricValue](name="avgAcceptedMessageSize[lte]", value_type=(int, str))
     blocked_messages = RequestField[int](name="blockedMessages", value_type=int)
     blocked_messages_gte = RequestField[int](name="blockedMessages[gte]", value_type=int)
     blocked_messages_lte = RequestField[int](name="blockedMessages[lte]", value_type=int)
@@ -319,15 +322,15 @@ class UsageMetricsRequest(JSONBodyRequest):
     rejected_messages = RequestField[int](name="rejectedMessages", value_type=int)
     rejected_messages_gte = RequestField[int](name="rejectedMessages[gte]", value_type=int)
     rejected_messages_lte = RequestField[int](name="rejectedMessages[lte]", value_type=int)
-    requested_throughput = RequestField[str](name="requestedThroughput", value_type=str)
-    requested_throughput_gte = RequestField[str](name="requestedThroughput[gte]", value_type=str)
-    requested_throughput_lte = RequestField[str](name="requestedThroughput[lte]", value_type=str)
+    requested_throughput = RequestField[UsageMetricValue](name="requestedThroughput", value_type=(int, str))
+    requested_throughput_gte = RequestField[UsageMetricValue](name="requestedThroughput[gte]", value_type=(int, str))
+    requested_throughput_lte = RequestField[UsageMetricValue](name="requestedThroughput[lte]", value_type=(int, str))
     sent_messages = RequestField[int](name="sentMessages", value_type=int)
     sent_messages_gte = RequestField[int](name="sentMessages[gte]", value_type=int)
     sent_messages_lte = RequestField[int](name="sentMessages[lte]", value_type=int)
-    throughput_forecast = RequestField[str](name="throughputForecast", value_type=str)
-    throughput_forecast_gte = RequestField[str](name="throughputForecast[gte]", value_type=str)
-    throughput_forecast_lte = RequestField[str](name="throughputForecast[lte]", value_type=str)
+    throughput_forecast = RequestField[UsageMetricValue](name="throughputForecast", value_type=(int, str))
+    throughput_forecast_gte = RequestField[UsageMetricValue](name="throughputForecast[gte]", value_type=(int, str))
+    throughput_forecast_lte = RequestField[UsageMetricValue](name="throughputForecast[lte]", value_type=(int, str))
     total_messages = RequestField[int](name="totalMessages", value_type=int)
     total_messages_gte = RequestField[int](name="totalMessages[gte]", value_type=int)
     total_messages_lte = RequestField[int](name="totalMessages[lte]", value_type=int)
@@ -385,20 +388,20 @@ class UsageMetricsRequest(JSONBodyRequest):
 
     def with_accepted_throughput(
             self,
-            exact: str | None = None,
+            exact: UsageMetricValue | None = None,
             *,
-            gte: str | None = None,
-            lte: str | None = None,
+            gte: UsageMetricValue | None = None,
+            lte: UsageMetricValue | None = None,
     ) -> Self:
         """Filter by acceptedThroughput using exact or range syntax."""
         return self.__with_metric_filter("accepted_throughput", exact=exact, gte=gte, lte=lte)
 
     def with_avg_accepted_message_size(
             self,
-            exact: str | None = None,
+            exact: UsageMetricValue | None = None,
             *,
-            gte: str | None = None,
-            lte: str | None = None,
+            gte: UsageMetricValue | None = None,
+            lte: UsageMetricValue | None = None,
     ) -> Self:
         """Filter by avgAcceptedMessageSize using exact or range syntax."""
         return self.__with_metric_filter("avg_accepted_message_size", exact=exact, gte=gte, lte=lte)
@@ -445,10 +448,10 @@ class UsageMetricsRequest(JSONBodyRequest):
 
     def with_requested_throughput(
             self,
-            exact: str | None = None,
+            exact: UsageMetricValue | None = None,
             *,
-            gte: str | None = None,
-            lte: str | None = None,
+            gte: UsageMetricValue | None = None,
+            lte: UsageMetricValue | None = None,
     ) -> Self:
         """Filter by requestedThroughput using exact or range syntax."""
         return self.__with_metric_filter("requested_throughput", exact=exact, gte=gte, lte=lte)
@@ -465,10 +468,10 @@ class UsageMetricsRequest(JSONBodyRequest):
 
     def with_throughput_forecast(
             self,
-            exact: str | None = None,
+            exact: UsageMetricValue | None = None,
             *,
-            gte: str | None = None,
-            lte: str | None = None,
+            gte: UsageMetricValue | None = None,
+            lte: UsageMetricValue | None = None,
     ) -> Self:
         """Filter by throughputForecast using exact or range syntax."""
         return self.__with_metric_filter("throughput_forecast", exact=exact, gte=gte, lte=lte)
@@ -497,9 +500,9 @@ class UsageMetricsRequest(JSONBodyRequest):
             self,
             name: str,
             *,
-            exact: int | str | None = None,
-            gte: int | str | None = None,
-            lte: int | str | None = None,
+            exact: UsageMetricValue | None = None,
+            gte: UsageMetricValue | None = None,
+            lte: UsageMetricValue | None = None,
     ) -> Self:
         if exact is not None and (gte is not None or lte is not None):
             raise ValueError("use either exact or range values, not both")
@@ -524,6 +527,17 @@ class UsageMetricsRequest(JSONBodyRequest):
         )
 
     def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this report body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, Any]:
         data = self.to_mapping(fields=(
             "relay_user_ids",
             "tag_ids",
@@ -571,7 +585,7 @@ class UsageMetricsRequest(JSONBodyRequest):
         date_filter = self._date_filter()
         if date_filter is not None:
             data["dates"] = date_filter
-        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+        return data
 
     def _date_filter(self) -> object:
         return _encoded_date_filter(self, self.encoder)

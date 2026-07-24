@@ -45,29 +45,31 @@ def show_usage_reports(client: SERClient, start: date, end: date) -> None:
 
     request = UsageMetricsRequest().with_dates(gte=start, lte=end).with_page(1, 5)
     relay_users = client.reporting.usage.relay_users.retrieve(request)
-    print(f"relay_users_status={relay_users.status}")
+    relay_users_page = relay_users.page
+    print(f"relay_users_status={relay_users_page.status}")
     print(
         "relay_users_page="
-        f"{relay_users.current_page_number} "
-        f"size={relay_users.page_size} "
-        f"total_items={relay_users.record_count}"
+        f"{relay_users_page.current_page_number} "
+        f"size={relay_users_page.page_size} "
+        f"total_items={relay_users_page.record_count}"
     )
-    print(f"relay_users_links.self={relay_users.self_link}")
-    print(f"relay_users_links.next={relay_users.next_link}")
-    for row in relay_users:
+    print(f"relay_users_links.self={relay_users_page.self_link}")
+    print(f"relay_users_links.next={relay_users_page.next_link}")
+    for row in relay_users_page.data:
         print(f"relay_user={row.relay_user_id} name={row.name} total={row.total_messages}")
 
     tags = client.reporting.usage.tags.retrieve(request)
-    print(f"tags_status={tags.status}")
+    tags_page = tags.page
+    print(f"tags_status={tags_page.status}")
     print(
         "tags_page="
-        f"{tags.current_page_number} "
-        f"size={tags.page_size} "
-        f"total_items={tags.record_count}"
+        f"{tags_page.current_page_number} "
+        f"size={tags_page.page_size} "
+        f"total_items={tags_page.record_count}"
     )
-    print(f"tags_links.self={tags.self_link}")
-    print(f"tags_links.next={tags.next_link}")
-    for row in tags:
+    print(f"tags_links.self={tags_page.self_link}")
+    print(f"tags_links.next={tags_page.next_link}")
+    for row in tags_page.data:
         print(f"tag={row.tag_id} name={row.name} total={row.total_messages}")
 
     trend_request = UsageTrendRequest().with_dates(gte=start, lte=end).with_interval(ReportInterval.DAY)

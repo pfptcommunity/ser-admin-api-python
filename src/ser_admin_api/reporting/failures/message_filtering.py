@@ -3,14 +3,15 @@ from __future__ import annotations
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
 from klarient import (
-    HTTPMethod,
     HTTPRequestOptions,
     JSONBody,
     JSONBodyRequest,
     Page,
+    PagedResponse,
+    PagedResponseModel,
     PageNumberState,
-    PageableResource,
     RequestField,
+    SyncResource,
     list_of,
 )
 from klarient.http.client import _SyncClientImpl
@@ -136,6 +137,17 @@ class FailureMessageFilteringRequest(JSONBodyRequest):
         return self
 
     def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this report body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, Any]:
         data = self.to_mapping(
             fields=(
                 "final_action",
@@ -149,7 +161,7 @@ class FailureMessageFilteringRequest(JSONBodyRequest):
         date_filter = self._date_filter()
         if date_filter is not None:
             data["dates"] = date_filter
-        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+        return data
 
     def _date_filter(self) -> object:
         return _encoded_date_filter(self, self.encoder)
@@ -193,19 +205,16 @@ class FailureMessageFilteringPage(Page[FailureMessageFiltering]):
         """Final rules returned in response metadata."""
         return self.metadata.final_rules
 
-class MessageFilteringResource(PageableResource[_SyncClientImpl, FailureMessageFiltering, PageNumberState]):
+class MessageFilteringResource(SyncResource[_SyncClientImpl]):
     """Message filtering failures endpoint."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureMessageFiltering,
-            page_model=FailureMessageFilteringPage,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(self, options: FailureMessageFilteringRequest | None = None) -> FailureMessageFilteringPage:
+    def retrieve(self, options: FailureMessageFilteringRequest | None = None) -> PagedResponse[FailureMessageFiltering]:
         """Retrieve message filtering failure report data."""
-        return self._retrieve_page_as(FailureMessageFilteringPage, HTTPMethod.POST, options)
+        return self._executor.post(
+            PagedResponseModel(
+                FailureMessageFiltering,
+                SERPagination(),
+                page_model=FailureMessageFilteringPage,
+            ),
+            options,
+        )

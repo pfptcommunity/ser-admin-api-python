@@ -28,8 +28,9 @@ def show_relay_config_discovery(client: SERClient) -> None:
         print(f"cluster={cluster.cluster_id} name={cluster.name}")
 
     domains = client.relay.verified_domains.retrieve()
-    print(f"domains_status={domains.status}")
-    for domain in domains[:5]:
+    domains_page = domains.page
+    print(f"domains_status={domains_page.status}")
+    for domain in domains_page.data[:5]:
         print(f"domain={domain}")
 
     tags = client.relay.tags.retrieve()

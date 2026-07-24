@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from klarient import FileDownload, HTTPMethod, Page, PageNumberState, PageableResource, ResourcePath, SyncResource
-from klarient.http.client import _SyncClientImpl
 from pathlib import Path
-from typing import Any
+
+from klarient import FileDownload, HTTPMethod, PagedResponse, PagedResponseModel, ResourcePath, SyncResource
+from klarient.http.client import _SyncClientImpl
 
 from ser_admin_api.common import SERPagination
 from ser_admin_api.common.enums import SortDirection
@@ -75,21 +75,15 @@ class ConnectorResource(SyncResource[_SyncClientImpl]):
         return self._executor.put(ConnectorResponse, options)
 
 
-class ConnectorsSearchResource(PageableResource[_SyncClientImpl, ConnectorInfo, PageNumberState]):
+class ConnectorsSearchResource(SyncResource[_SyncClientImpl]):
     """Search endpoint for connectors."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=ConnectorInfo,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(self, options: ConnectorSearch | None = None) -> Page[ConnectorInfo]:
+    def retrieve(self, options: ConnectorSearch | None = None) -> PagedResponse[ConnectorInfo]:
         """Search connectors with an optional request body."""
-        return self._retrieve_page(HTTPMethod.POST, options)
+        return self._executor.post(
+            PagedResponseModel(ConnectorInfo, SERPagination()),
+            options,
+        )
 
 
 class ConnectorNamesResource(SyncResource[_SyncClientImpl]):
@@ -108,43 +102,31 @@ class ConnectorRegionsResource(SyncResource[_SyncClientImpl]):
         return self._executor.get(ConnectorRegionsResponse)
 
 
-class ConnectorDetailsSearchResource(PageableResource[_SyncClientImpl, ConnectorDetail, PageNumberState]):
+class ConnectorDetailsSearchResource(SyncResource[_SyncClientImpl]):
     """Search endpoint for connector detail records."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=ConnectorDetail,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(self, options: ConnectorDetailsSearch | None = None) -> Page[ConnectorDetail]:
+    def retrieve(self, options: ConnectorDetailsSearch | None = None) -> PagedResponse[ConnectorDetail]:
         """Search connector details with an optional request body."""
-        return self._retrieve_page(HTTPMethod.POST, options)
-
-
-class ConnectorDetailsResource(PageableResource[_SyncClientImpl, ConnectorDetail, PageNumberState]):
-    """Connector details endpoint."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=ConnectorDetail,
-            pagination=SERPagination(),
-            **kwargs,
+        return self._executor.post(
+            PagedResponseModel(ConnectorDetail, SERPagination()),
+            options,
         )
+
+
+class ConnectorDetailsResource(SyncResource[_SyncClientImpl]):
+    """Connector details endpoint."""
 
     @property
     def search(self) -> ConnectorDetailsSearchResource:
         """Search resource below connector details."""
         return ConnectorDetailsSearchResource(self)
 
-    def retrieve(self, options: ConnectorInfoQuery | None = None) -> Page[ConnectorDetail]:
-        """Retrieve one page of connector detail records."""
-        return self._retrieve_page(options=options)
+    def retrieve(self, options: ConnectorInfoQuery | None = None) -> PagedResponse[ConnectorDetail]:
+        """Retrieve connector detail records."""
+        return self._executor.get(
+            PagedResponseModel(ConnectorDetail, SERPagination()),
+            options,
+        )
 
 
 class ConnectorDownloadResource(SyncResource[_SyncClientImpl]):
@@ -222,17 +204,8 @@ class ConnectorDownloadsResource(SyncResource[_SyncClientImpl]):
         return self._executor.get(ConnectorDownloadsResponse, options)
 
 
-class ConnectorsResource(PageableResource[_SyncClientImpl, ConnectorInfo, PageNumberState]):
+class ConnectorsResource(SyncResource[_SyncClientImpl]):
     """Paged connector collection resource."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=ConnectorInfo,
-            pagination=SERPagination(),
-            **kwargs,
-        )
 
     def __getitem__(self, connector_id: int | str) -> ConnectorResource:
         return ConnectorResource(self, segment=ResourcePath.segment(connector_id))
@@ -262,9 +235,12 @@ class ConnectorsResource(PageableResource[_SyncClientImpl, ConnectorInfo, PageNu
         """Downloads resource below connectors."""
         return ConnectorDownloadsResource(self, segment="downloads")
 
-    def retrieve(self, options: ConnectorInfoQuery | None = None) -> Page[ConnectorInfo]:
-        """Retrieve one page of connector information records."""
-        return self._retrieve_page(options=options)
+    def retrieve(self, options: ConnectorInfoQuery | None = None) -> PagedResponse[ConnectorInfo]:
+        """Retrieve connector information records."""
+        return self._executor.get(
+            PagedResponseModel(ConnectorInfo, SERPagination()),
+            options,
+        )
 
     def create(self, options: ConnectorCreate) -> ConnectorCreateResponse:
         """Create a connector."""

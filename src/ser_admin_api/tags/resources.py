@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from klarient import Page, PageNumberState, PageableResource, ResourcePath, SyncResource
+from klarient import PagedResponse, PagedResponseModel, ResourcePath, SyncResource
 from klarient.http.client import _SyncClientImpl
-from typing import Any
 
 from ser_admin_api.common import SERPagination
 from ser_admin_api.tags.models import TagInfo, TagNote
@@ -34,21 +33,15 @@ class TagNamesResource(SyncResource[_SyncClientImpl]):
         return self._executor.get(TagNamesResponse)
 
 
-class TagNotesResource(PageableResource[_SyncClientImpl, TagNote, PageNumberState]):
+class TagNotesResource(SyncResource[_SyncClientImpl]):
     """Notes endpoint for one tag."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=TagNote,
-            pagination=SERPagination(),
-            **kwargs,
+    def retrieve(self, options: TagNotesQuery | None = None) -> PagedResponse[TagNote]:
+        """Retrieve notes for the tag."""
+        return self._executor.get(
+            PagedResponseModel(TagNote, SERPagination()),
+            options,
         )
-
-    def retrieve(self, options: TagNotesQuery | None = None) -> Page[TagNote]:
-        """Retrieve one page of notes for the tag."""
-        return self._retrieve_page(options=options)
 
     def create(self, note: str) -> TagNoteResponse:
         """Create a note for the tag."""
@@ -111,17 +104,8 @@ class TagResource(SyncResource[_SyncClientImpl]):
         return self._executor.delete(TagDeleteResponse)
 
 
-class TagsResource(PageableResource[_SyncClientImpl, TagInfo, PageNumberState]):
+class TagsResource(SyncResource[_SyncClientImpl]):
     """Paged tag collection resource."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=TagInfo,
-            pagination=SERPagination(),
-            **kwargs,
-        )
 
     def __getitem__(self, tag_id: int | str) -> TagResource:
         return TagResource(self, segment=ResourcePath.segment(tag_id))
@@ -136,9 +120,12 @@ class TagsResource(PageableResource[_SyncClientImpl, TagInfo, PageNumberState]):
         """Names resource below tags."""
         return TagNamesResource(self, segment="names")
 
-    def retrieve(self, options: TagInfoQuery | None = None) -> Page[TagInfo]:
-        """Retrieve one page of tag information."""
-        return self._retrieve_page(options=options)
+    def retrieve(self, options: TagInfoQuery | None = None) -> PagedResponse[TagInfo]:
+        """Retrieve tag information."""
+        return self._executor.get(
+            PagedResponseModel(TagInfo, SERPagination()),
+            options,
+        )
 
     def create(
             self,

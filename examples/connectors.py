@@ -36,54 +36,58 @@ def show_connector_collections(client: SERClient) -> None:
     print(f"  url:  {client.connector_config.connectors.search.url}")
 
     connectors = client.connector_config.connectors.retrieve(ConnectorInfoQuery(page=1, size=5))
-    print(f"status={connectors.status}")
+    connectors_page = connectors.page
+    print(f"status={connectors_page.status}")
     print(
         "page="
-        f"{connectors.current_page_number} "
-        f"size={connectors.page_size} "
-        f"total_items={connectors.record_count}"
+        f"{connectors_page.current_page_number} "
+        f"size={connectors_page.page_size} "
+        f"total_items={connectors_page.record_count}"
     )
-    print(f"links.self={connectors.self_link}")
-    print(f"links.next={connectors.next_link}")
-    for connector in connectors:
+    print(f"links.self={connectors_page.self_link}")
+    print(f"links.next={connectors_page.next_link}")
+    for connector in connectors_page.data:
         print(f"connector={connector.connector_id} name={connector.name} status={connector.status}")
 
     details = client.connector_config.connectors.details.retrieve(ConnectorInfoQuery(page=1, size=5))
-    print(f"details_status={details.status}")
+    details_page = details.page
+    print(f"details_status={details_page.status}")
     print(
         "details_page="
-        f"{details.current_page_number} "
-        f"size={details.page_size} "
-        f"total_items={details.record_count}"
+        f"{details_page.current_page_number} "
+        f"size={details_page.page_size} "
+        f"total_items={details_page.record_count}"
     )
-    print(f"details_links.self={details.self_link}")
-    print(f"details_links.next={details.next_link}")
-    for detail in details[:5]:
+    print(f"details_links.self={details_page.self_link}")
+    print(f"details_links.next={details_page.next_link}")
+    for detail in details_page.data[:5]:
         print(f"detail={detail.connector_id} name={detail.name}")
 
     search = client.connector_config.connectors.search.retrieve(ConnectorSearch().with_size(5))
-    print(f"search_status={search.status}")
+    search_page = search.page
+    print(f"search_status={search_page.status}")
     print(
         "search_page="
-        f"{search.current_page_number} "
-        f"size={search.page_size} "
-        f"total_items={search.record_count}"
+        f"{search_page.current_page_number} "
+        f"size={search_page.page_size} "
+        f"total_items={search_page.record_count}"
     )
-    print(f"search_links.self={search.self_link}")
-    print(f"search_links.next={search.next_link}")
+    print(f"search_links.self={search_page.self_link}")
+    print(f"search_links.next={search_page.next_link}")
 
     details_search = client.connector_config.connectors.details.search.retrieve(
         ConnectorDetailsSearch().with_size(5)
     )
-    print(f"details_search_status={details_search.status}")
+    details_search_page = details_search.page
+    print(f"details_search_status={details_search_page.status}")
     print(
         "details_search_page="
-        f"{details_search.current_page_number} "
-        f"size={details_search.page_size} "
-        f"total_items={details_search.record_count}"
+        f"{details_search_page.current_page_number} "
+        f"size={details_search_page.page_size} "
+        f"total_items={details_search_page.record_count}"
     )
-    print(f"details_search_links.self={details_search.self_link}")
-    print(f"details_search_links.next={details_search.next_link}")
+    print(f"details_search_links.self={details_search_page.self_link}")
+    print(f"details_search_links.next={details_search_page.next_link}")
 
 
 def show_connector_request_shapes() -> None:

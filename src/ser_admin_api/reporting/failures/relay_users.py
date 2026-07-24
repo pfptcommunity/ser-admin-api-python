@@ -3,13 +3,12 @@ from __future__ import annotations
 from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
 from klarient import (
-    HTTPMethod,
     HTTPRequestOptions,
     JSONBody,
     JSONBodyRequest,
-    Page,
+    PagedResponse,
+    PagedResponseModel,
     PageNumberState,
-    PageableResource,
     QueryRequest,
     RequestField,
     ResourcePath,
@@ -229,6 +228,17 @@ class FailureRelayUsersRequest(JSONBodyRequest):
         return self
 
     def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this report body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, Any]:
         data = self.to_mapping(
             fields=(
                 "total_failed_messages",
@@ -257,7 +267,7 @@ class FailureRelayUsersRequest(JSONBodyRequest):
         date_filter = self._date_filter()
         if date_filter is not None:
             data["dates"] = date_filter
-        return HTTPRequestOptions(body=None if not data else JSONBody(data))
+        return data
 
     def _date_filter(self) -> object:
         return _encoded_date_filter(self, self.encoder)
@@ -378,37 +388,25 @@ class FailureRelayUserResource(SyncResource[_SyncClientImpl]):
         """Delivery failures resource below this relay user."""
         return DeliveryFailuresResource(self, segment="delivery-failures")
 
-class FailureRelayUsersResource(PageableResource[_SyncClientImpl, FailureRelayUser, PageNumberState]):
+class FailureRelayUsersResource(SyncResource[_SyncClientImpl]):
     """Failure relay users report endpoint."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureRelayUser,
-            pagination=SERPagination(),
-            **kwargs,
-        )
 
     def __getitem__(self, relay_user_id: int | str) -> FailureRelayUserResource:
         return FailureRelayUserResource(self, segment=ResourcePath.segment(relay_user_id))
 
-    def retrieve(self, options: FailureRelayUsersRequest | None = None) -> Page[FailureRelayUser]:
+    def retrieve(self, options: FailureRelayUsersRequest | None = None) -> PagedResponse[FailureRelayUser]:
         """Retrieve relay user failure report data."""
-        return self._retrieve_page(HTTPMethod.POST, options)
-
-class FailureTagRelayUsersResource(PageableResource[_SyncClientImpl, FailureRelayUser, PageNumberState]):
-    """Relay user failure report endpoint below one tag."""
-
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailureRelayUser,
-            pagination=SERPagination(),
-            **kwargs,
+        return self._executor.post(
+            PagedResponseModel(FailureRelayUser, SERPagination()),
+            options,
         )
 
-    def retrieve(self, options: FailureTagRelayUsersQuery | None = None) -> Page[FailureRelayUser]:
+class FailureTagRelayUsersResource(SyncResource[_SyncClientImpl]):
+    """Relay user failure report endpoint below one tag."""
+
+    def retrieve(self, options: FailureTagRelayUsersQuery | None = None) -> PagedResponse[FailureRelayUser]:
         """Retrieve relay user failures for the tag."""
-        return self._retrieve_page(options=options)
+        return self._executor.get(
+            PagedResponseModel(FailureRelayUser, SERPagination()),
+            options,
+        )

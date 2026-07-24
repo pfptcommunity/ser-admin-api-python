@@ -27,16 +27,17 @@ def show_tag_resources(client: SERClient) -> None:
         print(f"tag={tag.tag_id} name={tag.name}")
 
     tags = client.tag_management.tags.retrieve(TagInfoQuery(page=1, size=5))
-    print(f"status={tags.status}")
+    tags_page = tags.page
+    print(f"status={tags_page.status}")
     print(
         "page="
-        f"{tags.current_page_number} "
-        f"size={tags.page_size} "
-        f"total_items={tags.record_count}"
+        f"{tags_page.current_page_number} "
+        f"size={tags_page.page_size} "
+        f"total_items={tags_page.record_count}"
     )
-    print(f"links.self={tags.self_link}")
-    print(f"links.next={tags.next_link}")
-    for tag in tags:
+    print(f"links.self={tags_page.self_link}")
+    print(f"links.next={tags_page.next_link}")
+    for tag in tags_page.data:
         print(f"tag={tag.tag_id} name={tag.name}")
 
     download = client.tag_management.tags.download.retrieve(
@@ -50,8 +51,8 @@ def show_tag_resources(client: SERClient) -> None:
             f"assigned={detail.assigned_count} contacts={len(detail.contacts)}"
         )
 
-    if tags:
-        tag_id = tags[0].tag_id
+    if tags_page.data:
+        tag_id = tags_page.data[0].tag_id
         tag_resource = client.tag_management.tags[tag_id]
         print("One tag resource:")
         print(f"  path: {tag_resource.path}")
@@ -67,15 +68,16 @@ def show_tag_resources(client: SERClient) -> None:
         print(f"  url:  {tag_resource.resources.url}")
 
         notes = tag_resource.notes.retrieve(TagNotesQuery(page=1, size=5))
-        print(f"notes_status={notes.status}")
+        notes_page = notes.page
+        print(f"notes_status={notes_page.status}")
         print(
             "notes_page="
-            f"{notes.current_page_number} "
-            f"size={notes.page_size} "
-            f"total_items={notes.record_count}"
+            f"{notes_page.current_page_number} "
+            f"size={notes_page.page_size} "
+            f"total_items={notes_page.record_count}"
         )
-        print(f"notes_links.self={notes.self_link}")
-        print(f"notes_links.next={notes.next_link}")
+        print(f"notes_links.self={notes_page.self_link}")
+        print(f"notes_links.next={notes_page.next_link}")
         relay_users = tag_resource.relay_users.retrieve()
         print(f"tag_relay_users_status={relay_users.status}")
         resources = tag_resource.resources.retrieve()

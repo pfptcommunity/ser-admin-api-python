@@ -17,16 +17,17 @@ def show_unsubscribe_requests(client: SERClient) -> None:
     # Live API currently requires exact date even though range fields are documented.
     request = UnsubscribeRequestsQuery().with_date(date.today()).with_page(1, 5)
     requests = requests_resource.retrieve(request)
-    print(f"status={requests.status}")
+    requests_page = requests.page
+    print(f"status={requests_page.status}")
     print(
         "page="
-        f"{requests.current_page_number} "
-        f"size={requests.page_size} "
-        f"total_items={requests.record_count}"
+        f"{requests_page.current_page_number} "
+        f"size={requests_page.page_size} "
+        f"total_items={requests_page.record_count}"
     )
-    print(f"links.self={requests.self_link}")
-    print(f"links.next={requests.next_link}")
-    for row in requests:
+    print(f"links.self={requests_page.self_link}")
+    print(f"links.next={requests_page.next_link}")
+    for row in requests_page.data:
         print(f"request_recipient={row.recipient} list={row.list_id} values={dict(row)}")
 
 

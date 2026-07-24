@@ -4,12 +4,14 @@ from datetime import date as Date, datetime as DateTime
 from enum import StrEnum
 from klarient import (
     Page,
+    PagedResponse,
+    PagedResponseModel,
     PageNumberState,
-    PageableResource,
     QueryFieldSpec,
     QueryRequest,
     QuerySerialization,
     RequestField,
+    SyncResource,
     list_of,
 )
 from klarient.http.client import _SyncClientImpl
@@ -154,36 +156,30 @@ class FailurePolicyViolationsPage(Page[FailurePolicyViolation]):
         """Policy types returned in response metadata."""
         return self.metadata.policy_types
 
-class PolicyViolationsResource(PageableResource[_SyncClientImpl, FailurePolicyViolation, PageNumberState]):
+class PolicyViolationsResource(SyncResource[_SyncClientImpl]):
     """Policy violations endpoint."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailurePolicyViolation,
-            page_model=FailurePolicyViolationsPage,
-            pagination=SERTotalCountPagination(),
-            **kwargs,
+    def retrieve(self, options: FailurePolicyViolationsQuery | None = None) -> PagedResponse[FailurePolicyViolation]:
+        """Retrieve policy violation report data."""
+        return self._executor.get(
+            PagedResponseModel(
+                FailurePolicyViolation,
+                SERTotalCountPagination(),
+                page_model=FailurePolicyViolationsPage,
+            ),
+            options,
         )
 
-    def retrieve(self, options: FailurePolicyViolationsQuery | None = None) -> FailurePolicyViolationsPage:
-        """Retrieve policy violation report data."""
-        return self._retrieve_page_as(FailurePolicyViolationsPage, options=options)
-
-class TagPolicyViolationsResource(PageableResource[_SyncClientImpl, FailurePolicyViolation, PageNumberState]):
+class TagPolicyViolationsResource(SyncResource[_SyncClientImpl]):
     """Tag policy violations endpoint."""
 
-    def __init__(self, owner: Any, *, segment: str = "", **kwargs: Any) -> None:
-        super().__init__(
-            owner,
-            segment=segment,
-            page_item_model=FailurePolicyViolation,
-            page_model=FailurePolicyViolationsPage,
-            pagination=SERPagination(),
-            **kwargs,
-        )
-
-    def retrieve(self, options: FailurePolicyViolationsQuery | None = None) -> FailurePolicyViolationsPage:
+    def retrieve(self, options: FailurePolicyViolationsQuery | None = None) -> PagedResponse[FailurePolicyViolation]:
         """Retrieve tag policy violation report data."""
-        return self._retrieve_page_as(FailurePolicyViolationsPage, options=options)
+        return self._executor.get(
+            PagedResponseModel(
+                FailurePolicyViolation,
+                SERPagination(),
+                page_model=FailurePolicyViolationsPage,
+            ),
+            options,
+        )

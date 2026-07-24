@@ -543,3 +543,45 @@ class UnsubscribeRequestsQuery(JSONBodyRequest):
         """Set the documented headerFrom filter."""
         self.header_from = header_from
         return self
+
+    def _to_request_options(self) -> HTTPRequestOptions:
+        data = self._request_body()
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _to_page_request_options(self, state: PageNumberState) -> HTTPRequestOptions:
+        """Build this request body for one page request."""
+        data = self._request_body()
+        data["pageNum"] = state.page_number
+        data["pageSize"] = state.page_size
+        return HTTPRequestOptions(body=JSONBody(data))
+
+    def _request_body(self) -> dict[str, object]:
+        data = self.to_mapping(
+            fields=(
+                "order_by",
+                "order_dir",
+                "page",
+                "size",
+                "relay_user_ids",
+                "list_ids",
+                "recipient",
+                "header_from",
+            )
+        )
+        date_filter = self._date_filter()
+        if date_filter is not None:
+            data["date"] = date_filter
+        return data
+
+    def _date_filter(self) -> object | None:
+        if self._has_field_value("date"):
+            return self.encoder.encode_value(self._get_field_value("date"))
+
+        date_range: dict[str, object] = {}
+        if self._has_field_value("date_gte"):
+            date_range["gte"] = self._get_field_value("date_gte")
+        if self._has_field_value("date_lte"):
+            date_range["lte"] = self._get_field_value("date_lte")
+        if not date_range:
+            raise ValueError("date, date_gte, or date_lte is required")
+        return self.encoder.encode(date_range)
